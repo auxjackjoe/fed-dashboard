@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 """Tiny server for the dashboard.   python -I server.py   ->  http://<this-PC-name>:8769/fed_cheatsheet.html
 POST /api/refresh  runs build_data.py (live) in the background;  GET /api/status shows progress."""
-import http.server, socketserver, subprocess, sys, os, json, threading, time
+import http.server, socketserver, subprocess, sys, os, json, threading, time, re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PORT = int(os.environ.get("PORT", "8769"))
+PUBLIC = re.compile(r"^/(?:fed_cheatsheet\.html|index\.html|data\.json|itc_2nov\.json|favicon\.ico|photos/[\w-]+\.(?:jpe?g|png|webp))$")
 STATE = {"running": False, "started": None, "finished": None, "ok": None, "tail": ""}
 
 def run_build(demo=False):
@@ -27,6 +28,9 @@ class H(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
     def do_GET(self):
         if self.path.startswith("/api/status"): return self._json(STATE)
+        path = self.path.split("?", 1)[0].split("#", 1)[0]
+        if path == "/": self.send_response(302); self.send_header("Location", "/fed_cheatsheet.html"); self.end_headers(); return
+        if not PUBLIC.match(path): return self.send_error(404)   # scripts, cache, logs, word list etc. are never served
         return super().do_GET()
     def do_POST(self):
         if self.path.startswith("/api/refresh"):

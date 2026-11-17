@@ -129,7 +129,7 @@ h3{font-size:14px;margin:18px 0 6px}
 </style></head><body>
 <div id="app">
 <header>
- <div class="ttl"><h1>Dove / Hawk Cheat Sheet</h1><div class="sub">Fed first &middot; ECB &middot; BoE &middot; BoJ &middot; tone from speeches, news, video &amp; podcasts</div></div>
+ <div class="ttl"><h1>Dove / Hawk Cheat Sheet</h1><div class="sub">Fed first &middot; ECB &middot; BoE &middot; BoJ &middot; tone from Fed speeches &amp; news headlines</div></div>
  <nav id="nav"></nav>
  <div class="right"><button class="round" id="theme" title="Light / dark">&#9680;</button>
   <div class="stamp" id="stamp"></div><button class="btn" id="refresh">&#8635; Refresh data</button></div>
@@ -172,12 +172,10 @@ function face(m,size=44,cls="",attrs=""){
 function ringLegend(){return `<span class="legend">Face ring: ${[2022,2023,2024,2025,2026,2027,2028].map(y=>`<span><i style="background:${YC[y]}"></i>votes ${y}</span>`).join("")}<span><i style="background:#cdd5e2"></i>no vote 2022-28</span></span>`}
 const B=k=>D.banks[k||"FED"];
 const nM=()=>D.months.length;
-function lastIdx(bank,id){const t=B(bank).tone[id];for(let i=t.length-1;i>=0;i--)if(t[i]!=null)return i;return -1}
 function latest(bank,id,back=0){const t=B(bank).tone[id];const i=nM()-1-back;return t[i]}
 function currentMem(bank){return B(bank).members.filter(m=>!m.end)}
 function votersOf(y){return D.voters[String(y)]||[]}
 function grp(bank,ids,i){return mean(ids.map(id=>B(bank).tone[id]?.[i]).filter(v=>v!=null))}
-function curVal(bank,id){const v=latest(bank,id);return v}
 
 /* ============================ shell ============================ */
 const TABS=[["fomc","FOMC"],["tone","Tone shift over time"],["market","Market path"],["banks","ECB · BoE · BoJ"],["method","Method & sources"]];
@@ -241,18 +239,20 @@ function spectrum(host,bank,opt){
 function spark(vals,w=120,h=24){const v=vals.map((x,i)=>[i,x]).filter(p=>p[1]!=null);if(v.length<2)return `<svg width="${w}" height="${h}"></svg>`;
   const mn=Math.min(...v.map(p=>p[1])),mx=Math.max(...v.map(p=>p[1])),r=Math.max(mx-mn,10),n=vals.length-1;
   const pts=v.map(([i,x])=>`${(i/n*(w-6)+3).toFixed(1)},${(h-3-(x-mn)/r*(h-6)).toFixed(1)}`);
-  const last=v[v.length-1];return `<svg width="${w}" height="${h}"><polyline fill="none" stroke="var(--mut)" stroke-width="1.4" points="${pts.join(" ")}"/><circle cx="${pts[pts.length-1].split(",")[0]}" cy="${pts[pts.length-1].split(",")[1]}" r="2.4" fill="${toneColor(last[1])}"/></svg>`}
+  let dp="";v.forEach(([i],j)=>{dp+=(j&&v[j-1][0]===i-1?"L":"M")+pts[j]});
+  const last=v[v.length-1];return `<svg width="${w}" height="${h}"><path fill="none" stroke="var(--mut)" stroke-width="1.4" d="${dp}"/><circle cx="${pts[pts.length-1].split(",")[0]}" cy="${pts[pts.length-1].split(",")[1]}" r="2.4" fill="${toneColor(last[1])}"/></svg>`}
 function tile(label,val,sub,sel,key,extra=""){return `<div class="tile ${sel?"sel":""}" data-k="${key}"><div class="k">${label}</div><div class="v" style="color:var(--ink)">${val}</div><div class="d">${sub}</div>${extra}</div>`}
 function gaugeHTML(v,itc){return `<div class="gauge"><i style="left:${(Math.max(-100,Math.min(100,v))+100)/2}%"></i>${itc!=null?`<u style="left:${(itc*100+100)/2}%" title="ITC"></u>`:""}</div>`}
 function rFOMC(){
   const el=$("#view");
   const grpNow=y=>mean(votersOf(y).map(id=>latest("FED",id)).filter(v=>v!=null));
   const grpThen=(y,b)=>mean(votersOf(y).map(id=>latest("FED",id,b)).filter(v=>v!=null));
+  const nScored=ids=>ids.filter(id=>latest("FED",id)!=null).length,cnt=(k,n)=>k<n?`${n} (${k} scored)`:`${n}`;
   const tiles=[2026,2027,2028].map(y=>{const v=grpNow(y),p=grpThen(y,3),n=votersOf(y).length;
-    return tile(`${y} voters · ${n}`,v==null?"–":sg(v),v==null?"":`${toneLabel(v)} · <b>${p==null?"":sg(v-p)+" vs 3 mo ago"}</b>`,S.year===y,y,v==null?"":gaugeHTML(v))}).join("");
+    return tile(`${y} voters · ${cnt(nScored(votersOf(y)),n)}`,v==null?"–":sg(v),v==null?"":`${toneLabel(v)} · <b>${p==null?"":sg(v-p)+" vs 3 mo ago"}</b>`,S.year===y,y,v==null?"":gaugeHTML(v))}).join("");
   const cur=currentMem("FED").map(m=>latest("FED",m.id)).filter(v=>v!=null),all=mean(cur);
   const allP=mean(currentMem("FED").map(m=>latest("FED",m.id,3)).filter(v=>v!=null));
-  const t4=tile(`All ${currentMem("FED").length} participants`,all==null?"–":sg(all),all==null?"":`${toneLabel(all)} · <b>${allP==null?"":sg(all-allP)+" vs 3 mo ago"}</b>`,S.year==="all","all",all==null?"":gaugeHTML(all));
+  const t4=tile(`All ${currentMem("FED").length} participants${cur.length<currentMem("FED").length?` (${cur.length} scored)`:""}`,all==null?"–":sg(all),all==null?"":`${toneLabel(all)} · <b>${allP==null?"":sg(all-allP)+" vs 3 mo ago"}</b>`,S.year==="all","all",all==null?"":gaugeHTML(all));
   const mk=D.market,nx=mk.meetings&&mk.meetings[0];
   const t5=`<div class="tile" style="cursor:default"><div class="k">Market · next FOMC ${nx?dlab(nx.date).toUpperCase():""}</div><div class="v">${nx?(nx.bp>=0?"+":"−")+Math.abs(nx.bp).toFixed(0)+" bp":"–"}</div><div class="d">futures-implied vs EFFR ${mk.effr?(+mk.effr).toFixed(2)+"%":"n/a"}${mk.effr?` (range ${(Math.floor(mk.effr/.25)*.25).toFixed(2)}–${(Math.floor(mk.effr/.25)*.25+.25).toFixed(2)})`:""}</div></div>`;
   const nm=id=>MEM[id]?.short||id,tv=id=>{const v=latest("FED",id);return v==null?"–":sg(v)};
@@ -335,8 +335,6 @@ function dashFor(k){return {nfp3:"",unemp:"2 4",cpi:"7 4",corecpi:"2 3 7 3",core
 const OV={nfp3:["NFP 3-mo avg","#2563eb"],unemp:["Unemployment","#7c3aed"],cpi:["CPI y/y","#ea580c"],corecpi:["Core CPI y/y","#db2777"],corepce:["Core PCE y/y","#0f766e"],ffr:["Fed funds rate (actual)","#64748b"]};
 function ovSample(k){return `<svg viewBox="0 0 24 8"><line x1="0" y1="4" x2="24" y2="4" stroke="${OV[k][1]}" stroke-width="2.4" stroke-dasharray="${dashFor(k)||"none"}"/></svg>`}
 function ovFmt(k,v){if(v==null)return "–";return k==="nfp3"?(v>=0?"+":"−")+Math.abs(Math.round(v))+"k":v.toFixed(k==="ffr"?2:2)+"%"}
-function toneSeriesOf(bank,def,i0,i1){ // returns array of values for months i0..i1
-  const out=[];for(let i=i0;i<=i1;i++){out.push(def.fn(i))}return out}
 
 /* ============================ Tone shift tab ============================ */
 function groupDefs(){return [

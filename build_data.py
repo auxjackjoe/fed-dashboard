@@ -46,9 +46,16 @@ P = dict(
 # consume_first: matched words are removed before later phrases are searched,
 # so e.g. "no case for cutting rates" is not ALSO counted as "cutting rates".
 PH = [
- ("h_nocut",   "H", "no case or need for cuts", 2.8, r"\bno (?:case|need|urgency|reason|room|scope)\W+(?:\w+\W+){0,2}?(?:cut|cuts|cutting|lower|lowering|ease|easing)", "I see no case for cutting rates.", True),
+ # --- negation rules: run first and consume their words, so "no case for rate cuts" is not also read as "rate cuts"
+ ("h_notover",  "H", "hikes not over / won't take hikes off the table / won't hesitate to hike", 2.4, r"(?:\bnot|n't|\bnever|\bcannot)\W+(?:\w+\W+){0,6}?(?:hikes?|hiking|tightening)\W+(?:\w+\W+){0,4}?(?:off the table|over|done|finished|ended)\b|\b(?:hikes?|hiking|tightening)\W+(?:\w+\W+){0,2}?(?:are|is)?\W*(?:not|n't)\W+(?:yet\W+)?(?:over|done|finished)\b|(?:\bnot|n't|\bnever|\bcannot)\W+(?:\w+\W+){0,2}?done (?:with )?(?:rate )?(?:hikes|hiking|raising|tightening)|(?:\bnot|n't|\bnever|\bcannot)\W+(?:\w+\W+){0,3}?end (?:to|of) (?:the )?(?:hiking|tightening) cycle|(?:\bnot|n't|\bnever|\bcannot)\W+hesitate\W+(?:\w+\W+){0,2}?(?:hike|raise|tighten|act)", "He is not convinced rate hikes are over.", True),
+ ("d_notover",  "D", "won't take cuts off the table / won't hesitate to cut", 2.2, r"(?:\bnot|n't|\bnever|\bcannot)\W+(?:\w+\W+){0,6}?(?:cuts?|cutting|easing)\W+(?:\w+\W+){0,4}?(?:off the table|over|done|finished|ended)\b|(?:\bnot|n't|\bnever|\bcannot)\W+(?:\w+\W+){0,2}?done (?:with )?(?:rate )?(?:cuts|cutting|easing)|(?:\bnot|n't|\bnever|\bcannot)\W+hesitate\W+(?:\w+\W+){0,2}?(?:cut|lower|ease)", "She won't take rate cuts off the table.", True),
+ ("h_notruleout","H", "won't rule out a hike", 2.0, r"(?:\bnot|n't|\bnever|\bcannot)\W+(?:\w+\W+){0,2}?rul(?:e|ing) out\W+(?:\w+\W+){0,3}?(?:hikes?|hiking|raising rates|tightening)\b", "She would not rule out a rate hike.", True),
+ ("d_notruleout","D", "won't rule out a cut", 2.2, r"(?:\bnot|n't|\bnever|\bcannot)\W+(?:\w+\W+){0,2}?rul(?:e|ing) out\W+(?:\w+\W+){0,3}?(?:cuts?|cutting|easing|lower rates)\b", "He wouldn't rule out a rate cut.", True),
+ ("h_nocut",   "H", "no case or need for cuts", 2.8, r"\bno (?:case|need|urgency|reason|room|scope|rush|appetite)\W+(?:\w+\W+){0,3}?(?:cut|cuts|cutting|lower|lowering|ease|easing)\b", "I see no case for further rate cuts.", True),
+ ("h_notcut",  "H", "not ready / no rush to cut, cuts not needed", 2.4, r"(?:\bnot|n't|\bnever|\bcannot)\W+(?:\w+\W+){0,2}?(?:ready|rush\w*|hurry|need\w*|want\w*|support\w*|favou?r\w*|expect\w*|plan\w*|see\w*|getting|get|time|necessary|appropriate|warranted|convinced|swayed)\W+(?:\w+\W+){0,3}?(?:cuts?|cutting|cut rates|lower\w* rates|eas\w+)\b|\b(?:rate )?cuts?\W+(?:\w+\W+){0,3}?(?:off the table|(?:not|n't)\W+(?:\w+\W+)?(?:warranted|appropriate|needed|justified|on the table)|unlikely)|(?:\bnot|n't|\bnever|\bcannot)\W+need to be cut|(?:\bnot|n't|\bnever|\bcannot)\W+(?:to\W+|be\W+)?(?:cut|lower|ease)\W+(?:\w+\W+)?(?:rates?|policy|again|further|yet|soon)\b", "We are not ready to cut rates.", True),
  ("h_against", "H", "against / rules out a cut", 2.6, r"\b(?:against|opposes?|opposed to|rules? out|ruled out)\W+(?:\w+\W+){0,3}?cuts?\b", "He rules out a rate cut.", True),
  ("h_premat",  "H", "premature or too soon to cut", 2.6, r"\b(?:premature|too soon|too early)\W+(?:\w+\W+){0,4}?(?:cut|cutting|cuts|ease|easing|lower|lowering)", "It is premature to cut rates.", True),
+ ("d_nohike",  "D", "no need / no rush to hike, hikes off the table", 2.4, r"\bno (?:case|need|urgency|reason|appetite|plans?|rush|hurry)\W+(?:\w+\W+){0,3}?(?:hikes?|hiking|raise|raising|tighten\w*)\b|\b(?:warns?|warned|argues?|argued|cautions?|cautioned|push(?:es|ed)? back|is|was|are|spoke|speaks|opposes?|opposed)\W+against\W+(?:\w+\W+){0,3}?(?:hikes?|hiking|raising rates|tightening)\b|\b(?:rules? out|ruled out)\W+(?:\w+\W+){0,3}?(?:hikes?|hiking|raising rates|tightening)\b|(?:\bnot|n't|\bnever|\bcannot)\W+(?:\w+\W+){0,2}?(?:ready|rush\w*|hurry|need\w*|want\w*|support\w*|favou?r\w*|expect\w*|plan\w*|see\w*|getting|get|time|necessary|appropriate|warranted|convinced|swayed)\W+(?:\w+\W+){0,3}?(?:hikes?|hiking|raise rates|raising rates|rais\w+ interest rates|tighten\w*)\b|\b(?:rate )?hikes?\W+(?:\w+\W+){0,3}?(?:off the table|(?:not|n't)\W+(?:\w+\W+)?(?:warranted|appropriate|needed|justified|on the table)|unlikely)|(?:\bnot|n't|\bnever|\bcannot)\W+(?:to\W+)?(?:hike|raise|tighten)\W+(?:\w+\W+)?(?:rates?|policy|again|further|yet|soon)\b", "Rate hikes are off the table.", True),
  ("d_room",    "D", "supports / sees room or need for cuts or easing", 2.6, r"\b(?:supports?|supported|favou?rs?|favou?red|backs?|sees?|saw)\W+(?:\w+\W+){0,6}?(?:room|need|case|scope)\W+(?:\w+\W+){0,3}?(?:cuts?|cutting|easing|lower rates)|\b(?:supports?|favou?rs?|backs?)\W+(?:an? |the )?(?:rate )?cuts?\b", "He sees room for rate cuts.", True),
  ("d_dissent", "D", "dissent in favour of a cut", 3.2, r"\bdissent\w*\W+(?:\w+\W+){0,6}?(?:cut|cuts|cutting|lower|easing|ease)", "She dissented in favor of a cut.", True),
  ("h_infhigh", "H", "inflation is high / elevated / sticky", 2.0, r"inflation\W+(?:\w+\W+){0,3}?(?:too high|elevated|high|sticky|stubborn)", "Inflation is still too high.", False),
@@ -78,7 +85,7 @@ for ph in PHRASES: ph["rx"] = re.compile(ph["pattern"], re.I)
 
 def score_text(text, date_iso):
     """Returns H, D, {family: count}. Every occurrence counts."""
-    t = " " + text.lower() + " "
+    t = " " + text.lower().replace("’", "'").replace("‘", "'") + " "   # curly apostrophes: won’t -> won't
     H = D = 0.0; fam = {}
     for ph in PHRASES:                       # consume-first families are listed first
         n = 0
@@ -606,12 +613,19 @@ def live_market(effr):
     if not strip: log("Yahoo ZQ futures", "FAIL", "no contracts returned"); return None
     log("Yahoo ZQ futures", "ok", f"{len(strip)} contracts")
     rate = {s["month"]: s["rate"] for s in strip}; out = []; prev = effr
+    meet_months = {d[:7] for d in fomc_dates()}
     for d in fomc_dates():
         dd = d2date(d); mo = d[:7]
-        if mo not in rate: continue
+        if mo not in rate or d <= TODAY.isoformat(): continue
         N = (dd.replace(day=28) + dt.timedelta(days=4)).replace(day=1) - dd.replace(day=1); N = N.days
         before = dd.day; after = N - before
-        post = (rate[mo] * N - prev * before) / after if after > 3 else rate.get((dd + dt.timedelta(days=32)).strftime("%Y-%m"), prev)
+        nxt = (dd.replace(day=1) + dt.timedelta(days=32)).strftime("%Y-%m")
+        if nxt in rate and nxt not in meet_months:
+            post = rate[nxt]          # next month has no meeting: its contract is a clean read of the post-meeting rate
+        elif after > 7:
+            post = (rate[mo] * N - prev * before) / after   # month-average method; each move is measured from the previous meeting's level
+        else:
+            post = rate.get(nxt, prev)
         out.append(dict(date=d, bp=round((post - prev) * 100, 1))); prev = post
     return dict(effr=effr, strip=strip, meetings=out, source="Yahoo ZQ futures (month-average method)")
 

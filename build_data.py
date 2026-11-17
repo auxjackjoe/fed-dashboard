@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Dove / Hawk Cheat Sheet - data builder.
+FOMC Watch - data builder.
 
     python -I build_data.py            # live build (needs the proxy / internet)
     python -I build_data.py --demo     # synthetic demo data (no internet)
@@ -414,7 +414,7 @@ def opener():
                 print(f"[info] proxy {px} not reachable - connecting directly", flush=True); px = ""
         h = urllib.request.ProxyHandler({"http": px, "https": px}) if px else urllib.request.ProxyHandler()
         _opener = urllib.request.build_opener(h)
-        _opener.addheaders = [("User-Agent", "Mozilla/5.0 (DoveHawkDashboard)")]
+        _opener.addheaders = [("User-Agent", "Mozilla/5.0 (FOMCWatch)")]
     return _opener
 
 def http(url, data=None, headers=None, timeout=30, retries=2):

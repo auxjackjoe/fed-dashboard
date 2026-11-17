@@ -35,7 +35,7 @@ fi
 
 say "Step 3 of 5 - Create the repository $USER_LOGIN/$REPO"
 if ! "$GH" repo view "$USER_LOGIN/$REPO" >/dev/null 2>&1; then
-  "$GH" repo create "$REPO" --public --description "Central bank dove/hawk dashboard" || fail "could not create the repository"
+  "$GH" repo create "$REPO" --public --description "FOMC Watch - central bank dove/hawk tone dashboard" || fail "could not create the repository"
 fi
 git remote get-url origin >/dev/null 2>&1 || git remote add origin "https://github.com/$USER_LOGIN/$REPO.git"
 

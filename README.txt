@@ -1,4 +1,4 @@
-Dove / Hawk Cheat Sheet - setup on your PC
+FOMC Watch - setup on your PC
 1. Unzip anywhere. Open a terminal there.
 2. Run with Anaconda Python as script files, not one-liners:   python -I server.py
 3. Open  http://<this-PC-name>:8769/fed_cheatsheet.html   (never file:///)

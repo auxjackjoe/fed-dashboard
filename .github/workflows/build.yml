@@ -1,0 +1,65 @@
+name: Build & publish dashboard
+
+on:
+  schedule:
+    - cron: "0 11 * * *"   # ~6-7am New York
+    - cron: "0 21 * * *"   # ~4-5pm New York
+  workflow_dispatch:         # "Run workflow" button = Refresh data
+  push:
+    branches: [main]         # page edits go live without a rebuild
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: dashboard
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Rebuild data (live)
+        if: github.event_name != 'push'
+        continue-on-error: true      # a failed build keeps the last good data.json and still publishes
+        env:
+          FED_PROXY: ""
+          NEWS_EXCLUDE: ${{ secrets.NEWS_EXCLUDE }}
+          PYTHONUNBUFFERED: "1"
+        run: python -I build_data.py
+
+      - name: Save data + cache back to the repo
+        if: github.event_name != 'push'
+        run: |
+          git config user.name "dashboard-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data.json cache photos
+          git diff --cached --quiet || git commit -m "Data rebuild $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git pull --rebase --autostash && git push
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp index.html fed_cheatsheet.html data.json _site/
+          [ -f itc_2nov.json ] && cp itc_2nov.json _site/ || true
+          cp -r photos _site/
+          touch _site/.nojekyll
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

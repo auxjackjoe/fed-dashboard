@@ -1,0 +1,7 @@
+*.bak
+server.log
+__pycache__/
+.DS_Store
+_site/
+exclude_words.txt
+Dashboard address.txt

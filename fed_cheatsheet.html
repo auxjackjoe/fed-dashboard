@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Central Bank Dove / Hawk Cheat Sheet</title>
+<style>
+:root{--bg:#eef2f8;--card:rgba(255,255,255,.82);--solid:#fff;--ink:#16233f;--mut:#5d6b86;--faint:#8e9ab1;--line:#dde4ef;--acc:#2f4f93;--acc2:#1f5fd6;
+--hawk:#d9382f;--dove:#2f6fe4;--neu:#aab4c3;--shadow:0 1px 2px rgba(20,40,80,.06),0 6px 20px rgba(20,40,80,.05);--chip:#eef2f9}
+[data-theme=dark]{--bg:#0e1626;--card:rgba(24,34,54,.88);--solid:#182236;--ink:#e6ecf8;--mut:#a0aec8;--faint:#74829e;--line:#2a3955;--acc:#5b84dc;--acc2:#4b83f0;--shadow:0 1px 2px rgba(0,0,0,.4);--chip:#22314d}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:linear-gradient(180deg,var(--bg),#e8eef7 60%);color:var(--ink);font-size:13.5px;min-height:100vh}
+[data-theme=dark] body{background:linear-gradient(180deg,#0e1626,#0a1220)}
+#app{max-width:1500px;margin:0 auto;padding:18px 28px 60px}
+header{display:flex;align-items:flex-start;gap:28px;flex-wrap:wrap;margin-bottom:14px}
+.ttl h1{font-size:22px;margin:0;font-weight:700;letter-spacing:-.2px}
+.ttl .sub{color:var(--mut);font-size:12px;margin-top:2px}
+.ttl .by{color:var(--acc);font-weight:600;font-size:12px;margin-top:1px;display:none}
+nav{display:flex;gap:4px;margin-top:2px;flex-wrap:wrap}
+nav button{border:0;background:none;color:var(--ink);font:inherit;font-size:14.5px;padding:9px 16px;border-radius:9px;cursor:pointer;font-weight:500}
+nav button:hover{background:var(--chip)}
+nav button.on{background:var(--acc);color:#fff;box-shadow:0 2px 8px rgba(47,79,147,.35)}
+.right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.stamp{font-size:11.5px;color:var(--mut);text-align:right;line-height:1.45}
+.btn{border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;background:var(--acc2);color:#fff;box-shadow:0 2px 8px rgba(31,95,214,.3)}
+.btn.sm{padding:6px 10px;font-weight:500;background:var(--chip);color:var(--ink);box-shadow:none}
+.round{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--solid);color:var(--ink);cursor:pointer;font-size:15px}
+#demo{display:none;background:#fff4d6;border:1px solid #f0cf73;color:#6b4e00;border-radius:10px;padding:8px 14px;margin-bottom:12px;font-size:12.5px}
+[data-theme=dark] #demo{background:#3a3115;color:#f3d98a;border-color:#7a6320}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:16px;backdrop-filter:blur(6px)}
+.card h2{font-size:15px;margin:0 0 3px;font-weight:700}
+.card .hint{color:var(--mut);font-size:12px;line-height:1.5}
+.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:14px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer;box-shadow:var(--shadow)}
+.tile.sel{outline:2px solid var(--acc2);background:var(--solid)}
+.tile .k{font-size:11px;letter-spacing:.6px;color:var(--mut);text-transform:uppercase}
+.tile .v{font-size:27px;font-weight:700;margin:3px 0 1px}
+.tile .d{font-size:12px;color:var(--mut)}
+.tile .d b{font-weight:600}
+.gauge{height:5px;border-radius:3px;margin-top:10px;position:relative;background:linear-gradient(90deg,#2f6fe4,#c9d2e3 50%,#d9382f)}
+.gauge i{position:absolute;top:-3px;width:3px;height:11px;border-radius:2px;background:var(--ink);transform:translateX(-50%)}
+.gauge u{position:absolute;top:-2px;width:1px;height:9px;background:var(--mut);opacity:.7}
+.note{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:16px;color:var(--mut);font-size:12.5px;line-height:1.5}
+.note b{color:var(--ink)}
+.ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 8px}
+.ctl .lab{font-size:10.5px;letter-spacing:.7px;color:var(--faint);text-transform:uppercase;margin-right:2px}
+.seg{display:inline-flex;gap:3px;background:var(--chip);border-radius:9px;padding:3px}
+.seg button{border:0;background:none;font:inherit;font-size:12.5px;padding:5px 11px;border-radius:7px;cursor:pointer;color:var(--ink)}
+.seg button.on{background:var(--solid);box-shadow:0 1px 3px rgba(0,0,0,.15);font-weight:600}
+.seg button:disabled{opacity:.4;cursor:not-allowed}
+.tg{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:8px;background:var(--chip);cursor:pointer;font-size:12px;user-select:none;border:1px solid transparent}
+.tg.on{background:var(--solid);border-color:var(--line);font-weight:600}
+.tg svg{width:24px;height:8px}
+select{font:inherit;padding:5px 8px;border-radius:7px;border:1px solid var(--line);background:var(--solid);color:var(--ink)}
+.legend{font-size:11.5px;color:var(--mut);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.face{position:relative;display:inline-block;width:var(--s,44px);height:var(--s,44px);border-radius:50%;padding:3px;flex:none;transition:opacity .4s}
+.face .in{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;overflow:hidden;background:var(--hue,#888);color:#fff;font-weight:700;font-size:calc(var(--s,44px)*.32);position:relative}
+.face .in img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.face.dim{opacity:.33}
+.face.pick{box-shadow:0 0 0 3px var(--solid),0 0 0 5px var(--acc2)}
+.faces{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;align-items:center}
+.faces .face{cursor:pointer}
+.spec{position:relative;border:1px solid var(--line);border-radius:14px;margin-top:8px;overflow:hidden;
+ background:linear-gradient(90deg,rgba(47,111,228,.10),rgba(170,180,195,.06) 50%,rgba(217,56,47,.10))}
+.spec .ax{position:absolute;bottom:0;left:0;right:0;height:26px;border-top:1px solid var(--line)}
+.spec .tick{position:absolute;bottom:4px;font-size:10.5px;color:var(--faint);transform:translateX(-50%)}
+.spec .corner{position:absolute;top:8px;font-size:11px;font-weight:700;letter-spacing:.5px}
+.spec .m{position:absolute;transition:left .7s cubic-bezier(.3,.7,.2,1),top .7s cubic-bezier(.3,.7,.2,1);transform:translate(-50%,0);text-align:center;cursor:pointer}
+.spec .m span.nm{display:block;font-size:10.5px;font-weight:600;margin-top:-1px;text-shadow:0 0 3px var(--solid),0 0 3px var(--solid)}
+.spec .m.dim span.nm{opacity:.4}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:10px}
+.mc{background:var(--solid);border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer}
+.mc:hover{box-shadow:var(--shadow)}
+.mc .top{display:flex;gap:12px;align-items:center}
+.mc .nm{font-weight:700;font-size:15px}
+.mc .rl{color:var(--mut);font-size:12px}
+.mc .num{margin-left:auto;text-align:right}
+.mc .num b{font-size:21px;font-weight:700;display:block}
+.mc .num small{font-size:10.5px;letter-spacing:.5px;color:var(--mut);font-weight:700}
+.chips{display:flex;gap:4px;margin-top:5px}
+.chip{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--chip);color:var(--faint)}
+.chip.v{background:#1b2540;color:#fff}
+[data-theme=dark] .chip.v{background:#e6ecf8;color:#0e1626}
+.chip.nv{opacity:.55}
+.mc .spk{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--mut);margin:6px 0 8px}
+.topic{margin-top:10px;font-size:12px}
+.topic .h{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--faint);font-weight:700;letter-spacing:.6px}
+.pill{font-size:10.5px;font-weight:700;padding:1px 8px;border-radius:5px;letter-spacing:.2px}
+.p-vh{background:#fbd9d6;color:#b3231a}.p-h{background:#fde5cf;color:#b5621a}.p-n{background:#e6eaf1;color:#59657c}.p-d{background:#d9e6fb;color:#2459b8}.p-vd{background:#c4d6fa;color:#1a42a0}
+[data-theme=dark] .p-vh{background:#5a2420;color:#ffb3ad}[data-theme=dark] .p-h{background:#58391a;color:#ffc999}[data-theme=dark] .p-n{background:#2c3850;color:#b4c0d8}[data-theme=dark] .p-d{background:#22407a;color:#a9c4fa}[data-theme=dark] .p-vd{background:#1d3a80;color:#b7ccfb}
+.topic .q{color:var(--ink);margin:3px 0 0;line-height:1.4}
+.topic .src{color:var(--faint);font-size:11px;margin-top:1px}
+.topic .none{color:var(--faint);font-style:italic;margin-top:3px}
+.chartbox{position:relative;width:100%}
+.chartbox svg,#stack svg.pn{display:block;width:100%;height:auto}.legend svg{display:inline-block!important;width:22px!important;height:8px!important;vertical-align:middle}
+.fl{position:absolute;transform:translate(-50%,-50%);transition:none;pointer-events:none}
+.fl .face{--s:30px}
+.bubble{position:absolute;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;background:#14202f;color:#fff;font-weight:700;font-size:14px;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.bubble small{font-size:7.5px;letter-spacing:.3px;font-weight:600;opacity:.85;margin-top:1px}
+input[type=range]{width:100%;accent-color:var(--acc2)}
+.readout{font-size:14px;margin-top:6px}
+.readout b{font-weight:700}
+.rv{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;margin-top:4px}
+.rv span i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.tip{position:absolute;pointer-events:none;background:rgba(18,28,48,.94);color:#fff;border-radius:8px;padding:7px 10px;font-size:11.5px;line-height:1.5;z-index:5;display:none;white-space:nowrap}
+.tip i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);font-size:12.5px;vertical-align:top}
+th{color:var(--mut);font-weight:600;font-size:11.5px}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+details.rx summary{cursor:pointer;color:var(--acc);font-size:12px;list-style:none}
+details.rx summary::before{content:"\25B8 "}
+details.rx[open] summary::before{content:"\25BE "}
+code{background:var(--chip);padding:1px 5px;border-radius:4px;font-size:11.5px;word-break:break-all}
+.step{margin:8px 0;line-height:1.55}
+h3{font-size:14px;margin:18px 0 6px}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100vw);background:var(--solid);border-left:1px solid var(--line);box-shadow:-10px 0 40px rgba(0,0,0,.18);transform:translateX(105%);transition:transform .3s;z-index:20;overflow:auto;padding:18px 20px 40px}
+#drawer.open{transform:none}
+#drawer .x{position:absolute;top:10px;right:14px;border:0;background:none;font-size:22px;cursor:pointer;color:var(--mut)}
+.it{border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin:8px 0;font-size:12px}
+.it .m1{color:var(--mut);font-size:11px;display:flex;gap:8px;flex-wrap:wrap}
+.tickok{color:#188a4a;font-weight:700}.tickbad{color:#c0392b;font-weight:700}
+.mono{font-family:Consolas,Menlo,monospace;font-size:12px;background:var(--chip);padding:8px 10px;border-radius:8px;line-height:1.6}
+.empty{color:var(--faint);padding:30px;text-align:center}
+.bar{height:10px;border-radius:5px;background:var(--chip);overflow:hidden;display:flex}
+@media(max-width:1100px){.tiles{grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}
+@media(max-width:700px){.cards{grid-template-columns:1fr}#app{padding:12px}}
+</style></head><body>
+<div id="app">
+<header>
+ <div class="ttl"><h1>Dove / Hawk Cheat Sheet</h1><div class="sub">Fed first &middot; ECB &middot; BoE &middot; BoJ &middot; tone from speeches, news, video &amp; podcasts</div></div>
+ <nav id="nav"></nav>
+ <div class="right"><button class="round" id="theme" title="Light / dark">&#9680;</button>
+  <div class="stamp" id="stamp"></div><button class="btn" id="refresh">&#8635; Refresh data</button></div>
+</header>
+<div id="demo"></div>
+<div id="view"><div class="empty">Loading&hellip;</div></div>
+</div>
+<aside id="drawer"></aside>
+<div class="tip" id="tip"></div>
+
+<script>
+"use strict";
+/* ============================ basics ============================ */
+let D=null, ITC=null, MEM={}, MIDX={};
+const S={tab:"fomc",year:2026,view:"live",zoom:true,sort:"hawk",
+  tsPeriod:"All",tsMode:"charts",tsAdd:new Set(),hidden:new Set(),bank:"ECB",
+  R:{start:0,len:"latest",speed:1,voters:"start",ov:{nfp3:true,unemp:false,cpi:true,corecpi:false,corepce:true,ffr:false},show:"agg",add:new Set(),pos:0,playing:false,last:0}};
+const YC={2022:"#9b59b6",2023:"#16a5b8",2024:"#e0559a",2025:"#8d6e63",2026:"#e8832a",2027:"#2e7d4f",2028:"#243a5e"};
+const PAL=["#d62728","#7b3fb0","#1f77b4","#ff7f0e","#2ca02c","#8c564b","#e377c2","#17becf"];
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sg=v=>(v>0?"+":v<0?"−":"")+Math.abs(Math.round(v));
+const MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const mlab=m=>MN[+m.slice(5)-1]+" "+m.slice(2,4);
+const dlab=d=>MN[+d.slice(5,7)-1]+" "+(+d.slice(8,10));
+function mix(a,b,t){const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));const A=p(a),B=p(b);return "#"+A.map((x,i)=>Math.round(x+(B[i]-x)*t).toString(16).padStart(2,"0")).join("")}
+function toneColor(v){if(v==null)return "#aab4c3";v=Math.max(-100,Math.min(100,v));return v>=0?mix("#9aa6ba","#d9382f",Math.min(1,v/70)):mix("#9aa6ba","#2f6fe4",Math.min(1,-v/70))}
+function toneLabel(v){return v==null?"":v>60?"Very hawkish":v>20?"Hawkish":v>-20?"Neutral":v>-60?"Dovish":"Very dovish"}
+function pillCls(l){return {"Very hawkish":"p-vh","Hawkish":"p-h","Neutral":"p-n","Dovish":"p-d","Very dovish":"p-vd"}[l]||"p-n"}
+const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+function hue(id){let h=0;for(const c of id)h=(h*31+c.charCodeAt(0))%360;return `hsl(${h} 38% 42%)`}
+function face(m,size=44,cls="",attrs=""){
+  const ys=(m.votes||[]).filter(y=>YC[y]);let ring;
+  if(m.kind==="cb"||!ys.length)ring="#cdd5e2";
+  else if(ys.length===1)ring=YC[ys[0]];
+  else ring="conic-gradient("+ys.map((y,i)=>`${YC[y]} ${i*100/ys.length}% ${(i+1)*100/ys.length}%`).join(",")+")";
+  const img=m.photo?`<img src="${esc(m.photo)}" alt="" onerror="this.remove()">`:"";
+  return `<span class="face ${cls}" ${attrs} style="--s:${size}px;background:${ring};--hue:${hue(m.id)}" title="${esc(m.name)}"><span class="in">${esc(m.initials)}${img}</span></span>`;
+}
+function ringLegend(){return `<span class="legend">Face ring: ${[2022,2023,2024,2025,2026,2027,2028].map(y=>`<span><i style="background:${YC[y]}"></i>votes ${y}</span>`).join("")}<span><i style="background:#cdd5e2"></i>no vote 2022-28</span></span>`}
+const B=k=>D.banks[k||"FED"];
+const nM=()=>D.months.length;
+function lastIdx(bank,id){const t=B(bank).tone[id];for(let i=t.length-1;i>=0;i--)if(t[i]!=null)return i;return -1}
+function latest(bank,id,back=0){const t=B(bank).tone[id];const i=nM()-1-back;return t[i]}
+function currentMem(bank){return B(bank).members.filter(m=>!m.end)}
+function votersOf(y){return D.voters[String(y)]||[]}
+function grp(bank,ids,i){return mean(ids.map(id=>B(bank).tone[id]?.[i]).filter(v=>v!=null))}
+function curVal(bank,id){const v=latest(bank,id);return v}
+
+/* ============================ shell ============================ */
+const TABS=[["fomc","FOMC"],["tone","Tone shift over time"],["market","Market path"],["banks","ECB · BoE · BoJ"],["method","Method & sources"]];
+function drawNav(){$("#nav").innerHTML=TABS.map(([k,l])=>`<button class="${S.tab===k?"on":""}" data-t="${k}">${l}</button>`).join("");
+  $$("#nav button").forEach(b=>b.onclick=()=>{S.tab=b.dataset.t;S.R.playing=false;render()});
+}
+function render(){
+  if(!D)return;drawNav();closeDrawer();
+  const f={fomc:rFOMC,tone:rTone,market:rMarket,banks:rBanks,method:rMethod}[S.tab];f();
+  window.scrollTo(0,0)}
+$("#theme").onclick=()=>{const d=document.documentElement;const dark=d.dataset.theme==="dark";d.dataset.theme=dark?"":"dark";try{localStorage.setItem("dh-theme",dark?"":"dark")}catch(e){}; if(D)render()};
+try{if(localStorage.getItem("dh-theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}
+$("#refresh").onclick=async()=>{
+  const b=$("#refresh");b.disabled=true;b.textContent="Refreshing…";
+  try{const pr=await fetch("api/refresh",{method:"POST"}).catch(()=>null);
+    if(!pr||!pr.ok){ /* static hosting (GitHub Pages): no local server - data is rebuilt on a schedule in the cloud */
+      await load();render();
+      const gh=/^([\w-]+)\.github\.io$/.exec(location.hostname),repo=location.pathname.split("/")[1];
+      const wf=gh&&repo?`https://github.com/${gh[1]}/${repo}/actions/workflows/build.yml`:null;
+      if(confirm("Reloaded the latest published data (built "+D.meta.built+").\n\nData rebuilds automatically twice a day."+(wf?"\n\nPress OK to open GitHub and start a rebuild now (\"Run workflow\", ~15-20 min).":""))&&wf)window.open(wf,"_blank");
+      b.disabled=false;b.innerHTML="&#8635; Refresh data";return}
+    for(let i=0;i<4000;i++){await new Promise(r=>setTimeout(r,1500));const st=await (await fetch("api/status")).json();
+      b.textContent="Refreshing… "+Math.round((Date.now()/1000-st.started))+"s";
+      if(!st.running){ if(st.ok){await load();render();}else alert("Refresh did not complete (existing data kept).\n\n"+st.tail);break}}
+  }catch(e){alert("Refresh needs the small Python server (python -I server.py).\n"+e)}
+  b.disabled=false;b.innerHTML="&#8635; Refresh data"};
+async function load(){
+  D=await (await fetch("data.json?"+Date.now())).json();
+  try{const r=await fetch("itc_2nov.json");ITC=r.ok?await r.json():null}catch(e){ITC=null}
+  MEM={};MIDX={};for(const bk in D.banks)for(const m of D.banks[bk].members){MEM[m.id]=Object.assign({bk},m)}
+  $("#stamp").innerHTML=`Data built ${D.meta.built}<br>Market ${D.meta.market}`;
+  const dm=$("#demo");if(D.meta.demo){dm.style.display="block";dm.innerHTML="<b>DEMO DATA.</b> Headlines/speech text and macro series on this page are synthetic placeholders (labelled as such) so the layout can be checked. The scoring code is the real code. Run <code>python -I server.py</code> on your PC and press <b>Refresh data</b> for live data."}else dm.style.display="none";
+  S.R.start=0}
+
+/* ============================ spectrum ============================ */
+function spectrum(host,bank,opt){
+  const Bk=B(bank);host.classList.add("spec");
+  let mem=Bk.members.filter(m=>!m.end&&latest(bank,m.id)!=null);
+  const vy=opt.year==="all"?null:votersOf(opt.year);
+  const avgAll=mean(mem.filter(m=>!vy||vy.includes(m.id)).map(m=>latest(bank,m.id)));
+  const val=m=>{const t=latest(bank,m.id);if(opt.view==="rel")return t-avgAll;if(opt.view==="itc"){const x=ITC&&ITC[m.id];return x==null?null:x*100}return t};
+  if(opt.view==="itc"&&!ITC){host.style.height="260px";host.innerHTML=`<div class="empty" style="padding-top:90px">No ITC values loaded. Put a file <code>itc_2nov.json</code> next to this page, e.g. <code>{"waller":0.8,"powell":0.6}</code> on ITC's −1…+1 scale.</div>`;return}
+  mem=mem.filter(m=>val(m)!=null);
+  const vs=mem.map(val);let lo=-100,hi=100;
+  if(opt.view==="rel"){lo=-60;hi=60}
+  if(opt.zoom&&vs.length){lo=Math.floor((Math.min(...vs)-8)/10)*10;hi=Math.ceil((Math.max(...vs)+8)/10)*10}
+  const W=host.clientWidth||1000,L=34,R=34,sz=46,pw=W-L-R,X=v=>L+(v-lo)/(hi-lo)*pw;
+  const order=mem.map(m=>({m,x:X(val(m))})).sort((a,b)=>a.x-b.x),lanes=[];
+  order.forEach(o=>{let k=0;while(lanes[k]&&lanes[k].some(x=>Math.abs(x-o.x)<sz+8))k++;(lanes[k]=lanes[k]||[]).push(o.x);o.k=k});
+  const H=Math.max(420,lanes.length*(sz+16)+90);host.style.height=H+"px";
+  let h=`<div class="corner" style="left:14px;color:var(--dove)">◀ DOVISH</div><div class="corner" style="right:14px;color:var(--hawk)">HAWKISH ▶</div>`;
+  if(opt.zoom&&lo>0)h+=`<div style="position:absolute;left:14px;top:30px;font-size:11px;color:var(--faint)">neutral (0) is off-screen to the left – untick "Zoom" to see it</div>`;
+  const step=hi-lo>120?20:10;
+  h+=`<div class="ax">`+Array.from({length:Math.floor((hi-lo)/step)+1},(_,i)=>lo+i*step).filter(v=>v<=hi).map(v=>`<span class="tick" style="left:${X(v)}px">${v>0?"+":""}${v}</span>`).join("")+`</div>`;
+  order.forEach(o=>{const m=o.m,dim=vy&&!vy.includes(m.id);
+    h+=`<div class="m ${dim?"dim":""}" data-id="${m.id}" style="left:${o.x}px;top:${H-34-(o.k+1)*(sz+16)}px;--c:${toneColor(val(m))}" title="${esc(m.name)} ${sg(val(m))}">${face(m,sz,dim?"dim":"")}<span class="nm">${esc(m.short)}</span></div>`});
+  host.innerHTML=h;
+  $$(".m",host).forEach(e=>e.onclick=()=>openWhy(bank,e.dataset.id))}
+
+/* ============================ FOMC tab ============================ */
+function spark(vals,w=120,h=24){const v=vals.map((x,i)=>[i,x]).filter(p=>p[1]!=null);if(v.length<2)return `<svg width="${w}" height="${h}"></svg>`;
+  const mn=Math.min(...v.map(p=>p[1])),mx=Math.max(...v.map(p=>p[1])),r=Math.max(mx-mn,10),n=vals.length-1;
+  const pts=v.map(([i,x])=>`${(i/n*(w-6)+3).toFixed(1)},${(h-3-(x-mn)/r*(h-6)).toFixed(1)}`);
+  const last=v[v.length-1];return `<svg width="${w}" height="${h}"><polyline fill="none" stroke="var(--mut)" stroke-width="1.4" points="${pts.join(" ")}"/><circle cx="${pts[pts.length-1].split(",")[0]}" cy="${pts[pts.length-1].split(",")[1]}" r="2.4" fill="${toneColor(last[1])}"/></svg>`}
+function tile(label,val,sub,sel,key,extra=""){return `<div class="tile ${sel?"sel":""}" data-k="${key}"><div class="k">${label}</div><div class="v" style="color:var(--ink)">${val}</div><div class="d">${sub}</div>${extra}</div>`}
+function gaugeHTML(v,itc){return `<div class="gauge"><i style="left:${(Math.max(-100,Math.min(100,v))+100)/2}%"></i>${itc!=null?`<u style="left:${(itc*100+100)/2}%" title="ITC"></u>`:""}</div>`}
+function rFOMC(){
+  const el=$("#view");
+  const grpNow=y=>mean(votersOf(y).map(id=>latest("FED",id)).filter(v=>v!=null));
+  const grpThen=(y,b)=>mean(votersOf(y).map(id=>latest("FED",id,b)).filter(v=>v!=null));
+  const tiles=[2026,2027,2028].map(y=>{const v=grpNow(y),p=grpThen(y,3),n=votersOf(y).length;
+    return tile(`${y} voters · ${n}`,v==null?"–":sg(v),v==null?"":`${toneLabel(v)} · <b>${p==null?"":sg(v-p)+" vs 3 mo ago"}</b>`,S.year===y,y,v==null?"":gaugeHTML(v))}).join("");
+  const cur=currentMem("FED").map(m=>latest("FED",m.id)).filter(v=>v!=null),all=mean(cur);
+  const allP=mean(currentMem("FED").map(m=>latest("FED",m.id,3)).filter(v=>v!=null));
+  const t4=tile(`All ${currentMem("FED").length} participants`,all==null?"–":sg(all),all==null?"":`${toneLabel(all)} · <b>${allP==null?"":sg(all-allP)+" vs 3 mo ago"}</b>`,S.year==="all","all",all==null?"":gaugeHTML(all));
+  const mk=D.market,nx=mk.meetings&&mk.meetings[0];
+  const t5=`<div class="tile" style="cursor:default"><div class="k">Market · next FOMC ${nx?dlab(nx.date).toUpperCase():""}</div><div class="v">${nx?(nx.bp>=0?"+":"−")+Math.abs(nx.bp).toFixed(0)+" bp":"–"}</div><div class="d">futures-implied vs EFFR ${mk.effr?(+mk.effr).toFixed(2)+"%":"n/a"}${mk.effr?` (range ${(Math.floor(mk.effr/.25)*.25).toFixed(2)}–${(Math.floor(mk.effr/.25)*.25+.25).toFixed(2)})`:""}</div></div>`;
+  const nm=id=>MEM[id]?.short||id,tv=id=>{const v=latest("FED",id);return v==null?"–":sg(v)};
+  const rot=(y)=>{const a=votersOf(y),b=votersOf(y+1);const off=a.filter(i=>!b.includes(i)&&!MEM[i].end),on=b.filter(i=>!a.includes(i));
+    return {off:off.map(i=>`${nm(i)} (${tv(i)})`).join(", "),on:on.map(i=>`${nm(i)} (${tv(i)})`).join(", ")}};
+  const g26=grpNow(2026),g27=grpNow(2027),g28=grpNow(2028),r26=rot(2026),r27=rot(2027);
+  const dd=(a,b,lab)=>a==null||b==null?"":Math.abs(b-a)<.5?"unchanged":`${Math.abs(Math.round(b-a))} pts more ${b>a?"hawkish":"dovish"}`;
+  const rotline=(g26!=null&&g27!=null)?`<div class="note"><b>Rotation effect:</b> the 2027 voting group is ${dd(g26,g27)} than the 2026 group (${sg(g26)} → ${sg(g27)}); 2028 is ${g28!=null?"a further "+dd(g27,g28):""}. <span style="color:var(--faint)">Rotating off after 2026: ${esc(r26.off)||"–"}. Rotating on in 2027: ${esc(r26.on)||"–"}.</span></div>`:"";
+  const sorts={hawk:"Hawkishness",voters:"Voters first",move:"Biggest 6-mo move",name:"Name"};
+  el.innerHTML=`<div class="tiles">${tiles}${t4}${t5}</div>${rotline}
+  <div class="card"><h2>FOMC spectrum <span style="font-weight:400;color:var(--mut);font-size:12px">— Live tone from the latest scored month of speeches &amp; coverage (−100 very dovish … +100 very hawkish) &middot; </span>${ringLegend()}</h2>
+   <div class="hint">Each face sits where the member's recent communication lands. Ring colours = the years that member votes. Faded faces do not vote in the selected year – pick a year above (or a tile) to see who actually matters.</div>
+   <div class="ctl"><span class="lab">Voting year</span><span class="seg" id="sy">${[2026,2027,2028,"all"].map(y=>`<button data-v="${y}" class="${S.year===y?"on":""}">${y==="all"?"All":y}</button>`).join("")}</span>
+    <span class="lab" style="margin-left:14px">View</span><span class="seg" id="sv">${[["live","Live tone"],["rel","Relative to FOMC avg"],["itc","ITC (2 Nov)"]].map(([k,l])=>`<button data-v="${k}" class="${S.view===k?"on":""}">${l}</button>`).join("")}</span>
+    <label class="tg ${S.zoom?"on":""}" id="zm"><input type="checkbox" ${S.zoom?"checked":""}> Zoom to data range</label></div>
+   <div id="spec"></div></div>
+  <div class="card"><h2>Member cards</h2><div class="hint">What each member has said on jobs, inflation and guidance (latest quote or headline, 120-day stance). Click a face or name for full detail and history. Thin tick = ITC's 2-Nov view.</div>
+   <div class="ctl"><span class="lab">Sort</span><span class="seg" id="so">${Object.entries(sorts).map(([k,l])=>`<button data-v="${k}" class="${S.sort===k?"on":""}">${l}</button>`).join("")}</span></div><div class="cards" id="mc"></div></div>`;
+  $$(".tile[data-k]").forEach(t=>t.onclick=()=>{S.year=t.dataset.k==="all"?"all":+t.dataset.k;rFOMC()});
+  $$("#sy button").forEach(b=>b.onclick=()=>{S.year=b.dataset.v==="all"?"all":+b.dataset.v;rFOMC()});
+  $$("#sv button").forEach(b=>b.onclick=()=>{S.view=b.dataset.v;rFOMC()});
+  $("#zm input").onchange=e=>{S.zoom=e.target.checked;rFOMC()};
+  $$("#so button").forEach(b=>b.onclick=()=>{S.sort=b.dataset.v;rFOMC()});
+  spectrum($("#spec"),"FED",{year:S.year,view:S.view,zoom:S.zoom});
+  cardsGrid()}
+function cardsGrid(){
+  const vy=S.year==="all"?[]:votersOf(S.year);
+  let ms=currentMem("FED").map(m=>({m,v:latest("FED",m.id)}));
+  const mv=m=>{const a=latest("FED",m.id),b=latest("FED",m.id,6);return a!=null&&b!=null?a-b:0};
+  ms.sort((a,b)=>S.sort==="name"?a.m.short.localeCompare(b.m.short):S.sort==="move"?Math.abs(mv(b.m))-Math.abs(mv(a.m)):S.sort==="voters"?((vy.includes(b.m.id)?1:0)-(vy.includes(a.m.id)?1:0))||((b.v??-999)-(a.v??-999)):((b.v??-999)-(a.v??-999)));
+  $("#mc").innerHTML=ms.map(({m,v})=>{
+    const c=D.cards[m.id]||{},t3=latest("FED",m.id,3),t6=latest("FED",m.id,6);
+    const chg=(a,b)=>a!=null&&b!=null?sg(a-b):"–";
+    const mvT=v!=null&&t3!=null?(v>=t3?`▲ more hawkish`:`▼ more dovish`):"";
+    const chips=[2026,2027,2028].map(y=>`<span class="chip ${m.votes.includes(y)?"v":"nv"}">${y}${m.votes.includes(y)?" ✓":""}</span>`).join("");
+    const topic=(k,l)=>{const t=c[k];return `<div class="topic"><div class="h">${l}${t?` <span class="pill ${pillCls(t.stance)}">${t.stance}</span> <span style="font-weight:400;letter-spacing:0">${t.n} mention${t.n>1?"s":""} · 120d</span>`:""}</div>${t?`<div class="q">${esc(t.text)}</div><div class="src">— ${dlab(t.date)} · <b>${t.kind==="s"?"Speech":"News"}</b> ${esc(t.src)}</div>`:`<div class="none">no recent comments found</div>`}</div>`};
+    return `<div class="mc" data-id="${m.id}"><div class="top">${face(m,52,vy.length&&!vy.includes(m.id)?"dim":"")}<div><div class="nm">${esc(m.name)}</div><div class="rl">${esc(m.role)}</div><div class="chips">${chips}</div></div>
+     <div class="num"><b style="color:${toneColor(v)}">${v==null?"–":sg(v)}</b><small>${v==null?"INSUFFICIENT EVIDENCE":toneLabel(v).toUpperCase()}</small></div></div>
+     ${v==null?"":gaugeHTML(v,ITC&&ITC[m.id])}
+     <div class="spk">${spark(B("FED").tone[m.id].slice(-12))}<span>${mvT} 3m ${chg(v,t3)} · 6m ${chg(v,t6)}</span></div>
+     ${topic("jobs","JOBS")}${topic("inflation","INFLATION")}${topic("guidance","GUIDANCE")}</div>`}).join("");
+  $$(".mc").forEach(e=>e.onclick=()=>openWhy("FED",e.dataset.id))}
+
+/* ============================ Why this score ============================ */
+function whyCompute(bank,id,mi){
+  const Bk=B(bank),P=D.meta.params,mo=D.months[mi],[y,m]=mo.split("-").map(Number),first=Date.UTC(y,m-1,1),DAY=864e5;
+  const rows=[];for(const it of D.items[id]||[]){const d=Date.parse(it.d+"T00:00:00Z"),inM=it.d.slice(0,7)===mo,lb=d>=first-P.lookback_days*DAY&&d<first;
+    if(inM||lb)rows.push({it,f:inM?1:P.lookback_weight})}
+  const mu=Bk.mu[id],K=P.shrink_K;let sw=0,tw=0;rows.forEach(r=>{sw+=r.it.w*r.f*r.it.s;tw+=r.it.w*r.f});
+  const x=mu==null?null:(sw+K*mu)/(tw+K),tone=x==null?null:100*Math.tanh(P.tanh_k*x/Bk.scale);
+  const chart=Bk.tone[id][mi],flag=Bk.flag[id][mi];
+  return {rows,mu,K,sw,tw,x,tone,chart,flag,scale:Bk.scale,P,mo,ok:flag==="o"&&tone!=null&&chart!=null&&Math.abs(tone-chart)<.06}}
+function openWhy(bank,id,mi){
+  const m=MEM[id],Bk=B(bank);if(mi==null){const t=Bk.tone[id];mi=t.length-1;for(let i=t.length-1;i>=0;i--)if(Bk.flag[id][i]==="o"){mi=i;break}}
+  const dr=$("#drawer"),months=D.months.map((mo,i)=>[i,mo]).filter(([i])=>Bk.tone[id][i]!=null||true);
+  const w=whyCompute(bank,id,mi),ph=Object.fromEntries(D.phrases.map(p=>[p.id,p]));
+  const head=`<button class="x" onclick="closeDrawer()">×</button><div style="display:flex;gap:12px;align-items:center">${face(m,56)}<div><div style="font-size:17px;font-weight:700">${esc(m.name)}</div><div class="hint">${esc(m.role)}${m.verify?' · <b style="color:#b5621a">member list unverified – check</b>':""}</div></div></div>
+   <h3>Why this score?</h3><div class="ctl" style="margin-top:0"><span class="lab">Month</span><select id="wm">${months.map(([i,mo])=>`<option value="${i}" ${i===mi?"selected":""}>${mlab(mo)} ${Bk.tone[id][i]!=null?"("+sg(Bk.tone[id][i])+")":""}</option>`).join("")}</select></div>`;
+  let body="";
+  if(Bk.mu[id]==null)body=`<div class="note">Fewer than ${w.P.min_items} scored items in the whole period (${Bk.counts[id]}), so no tone line is drawn – "insufficient evidence".</div>`;
+  else{
+    if(w.flag==="c")body+=`<div class="note"><b>Carried forward.</b> No scored item dated in ${mlab(w.mo)}, so the previous month's value is repeated (at most ${w.P.max_carry} months in a row).</div>`;
+    if(w.flag==null)body+=`<div class="note">No line this month (outside tenure, or silent for more than ${w.P.max_carry} months).</div>`;
+    body+=`<div class="hint" style="margin:6px 0">Items in ${mlab(w.mo)} count in full; items in the 30 days before count at half weight.</div>`;
+    body+=w.rows.length?w.rows.sort((a,b)=>b.it.d.localeCompare(a.it.d)).map(({it,f})=>{
+      const fam=Object.entries(it.f).map(([k,n])=>`<span class="pill ${(ph[k].side==="H"&&!(k===D.flip_id&&it.d<w.P.flip_before))?"p-h":"p-d"}">${esc(ph[k].label)}${n>1?" ×"+n:""}</span>`).join(" ");
+      return `<div class="it"><div class="m1"><b>${dlab(it.d)}</b><span>${it.k==="s"?"Speech":"Headline"}</span><span>${esc(it.src)}</span>${f<1?"<span>(prior 30 days × 0.5)</span>":""}</div>
+      <div style="margin:3px 0">${it.u?`<a href="${esc(it.u)}" target="_blank" rel="noopener">${esc(it.t)}</a>`:esc(it.t)}</div>${it.q&&it.q!==it.t?`<div class="hint">“${esc(it.q)}”</div>`:""}
+      <div style="margin:4px 0">${fam}</div><div class="hint">hawk ${it.H} − dove ${it.D} → s = (${it.H}−${it.D}) ÷ (${it.H}+${it.D}+1) = <b>${it.s.toFixed(3)}</b> · weight ${(it.w*f).toFixed(2)}</div></div>`}).join(""):`<div class="empty">No scored items in the window.</div>`;
+    body+=`<h3>The arithmetic</h3><div class="mono">Σ weight×s = ${w.sw.toFixed(3)}<br>Σ weight = ${w.tw.toFixed(3)}<br>member's own long-run average μ = ${w.mu.toFixed(4)}, K = ${w.K}<br>x = (${w.sw.toFixed(3)} + ${w.K}×${w.mu.toFixed(4)}) ÷ (${w.tw.toFixed(3)} + ${w.K}) = ${w.x.toFixed(4)}<br>tone = 100 × tanh(${w.P.tanh_k} × ${w.x.toFixed(4)} ÷ ${w.scale}) = <b>${w.tone.toFixed(2)}</b><br>chart shows ${w.chart==null?"–":w.chart.toFixed(2)} ${w.flag==="o"?(w.ok?'<span class="tickok">✔ matches</span>':'<span class="tickbad">✘ differs</span>'):w.flag==="c"?"(carried value)":""}</div>`;
+  }
+  dr.innerHTML=head+body;dr.classList.add("open");
+  $("#wm").onchange=e=>openWhy(bank,id,+e.target.value)}
+function closeDrawer(){$("#drawer").classList.remove("open")}
+
+/* ============================ chart helpers ============================ */
+function niceExt(vals,pad=.08){const v=vals.filter(x=>x!=null);if(!v.length)return[0,1];let a=Math.min(...v),b=Math.max(...v);if(a===b){a-=1;b+=1}const p=(b-a)*pad;return[a-p,b+p]}
+function ticks(a,b,n=5){const r=(b-a)/n,p=Math.pow(10,Math.floor(Math.log10(r))),f=r/p,s=(f<1.5?1:f<3.5?2:f<7.5?5:10)*p;const o=[];for(let t=Math.ceil(a/s)*s;t<=b+1e-9;t+=s)o.push(+t.toFixed(10));return o}
+function dashFor(k){return {nfp3:"",unemp:"2 4",cpi:"7 4",corecpi:"2 3 7 3",corepce:"11 4",ffr:""}[k]}
+const OV={nfp3:["NFP 3-mo avg","#2563eb"],unemp:["Unemployment","#7c3aed"],cpi:["CPI y/y","#ea580c"],corecpi:["Core CPI y/y","#db2777"],corepce:["Core PCE y/y","#0f766e"],ffr:["Fed funds rate (actual)","#64748b"]};
+function ovSample(k){return `<svg viewBox="0 0 24 8"><line x1="0" y1="4" x2="24" y2="4" stroke="${OV[k][1]}" stroke-width="2.4" stroke-dasharray="${dashFor(k)||"none"}"/></svg>`}
+function ovFmt(k,v){if(v==null)return "–";return k==="nfp3"?(v>=0?"+":"−")+Math.abs(Math.round(v))+"k":v.toFixed(k==="ffr"?2:2)+"%"}
+function toneSeriesOf(bank,def,i0,i1){ // returns array of values for months i0..i1
+  const out=[];for(let i=i0;i<=i1;i++){out.push(def.fn(i))}return out}
+
+/* ============================ Tone shift tab ============================ */
+function groupDefs(){return [
+  {key:"g26",name:"2026 voters",color:YC[2026],fn:i=>grp("FED",votersOf(2026),i),w:2},
+  {key:"g27",name:"2027 voters",color:YC[2027],fn:i=>grp("FED",votersOf(2027),i),w:2},
+  {key:"g28",name:"2028 voters",color:YC[2028],fn:i=>grp("FED",votersOf(2028),i),w:2},
+  {key:"gall",name:"All FOMC",color:"#1f2937",dash:"6 4",fn:i=>mean(B("FED").members.map(m=>B("FED").tone[m.id][i]).filter(v=>v!=null)),w:2.4},
+  {key:"gyr",name:"Voters of the year",color:"#0b0f1a",fn:i=>grp("FED",votersOf(D.months[i].slice(0,4)),i),w:3}]}
+function memDef(id,color){return {key:"m"+id,name:MEM[id].short,color,fn:i=>B("FED").tone[id][i],w:2.2,mid:id}}
+function rTone(){
+  const el=$("#view");const R=S.R;
+  el.innerHTML=`<div class="card" id="replay"></div><div class="card" id="shift"></div>`;
+  drawReplay();drawShift()}
+
+/* ---------- Replay ---------- */
+function replayWin(){const R=S.R,n=nM();const i0=Math.min(R.start,n-2);const i1=R.len==="latest"?n-1:Math.min(n-1,i0+R.len-1);return[i0,Math.max(i1,i0+1)]}
+function replayGroup(){const R=S.R;const [i0]=replayWin();const y=R.voters==="start"?+D.months[i0].slice(0,4):R.voters;return{y,ids:votersOf(y).filter(id=>B("FED").tone[id].some(v=>v!=null))}}
+function drawReplay(){
+  const R=S.R,host=$("#replay");const [i0,i1]=replayWin();const G=replayGroup();R.pos=Math.max(i0,Math.min(i1,R.pos||i0));
+  const opts=D.months.map((m,i)=>`<option value="${i}" ${i===R.start?"selected":""}>${mlab(m)}</option>`).join("");
+  const memOrder=[...G.ids,...B("FED").members.filter(m=>!G.ids.includes(m.id)&&B("FED").tone[m.id].some(v=>v!=null)).map(m=>m.id)];
+  host.innerHTML=`<h2><span id="pl" style="cursor:pointer">▶</span> Replay – tone and the economy, together</h2>
+  <div class="hint">Press play and watch the voters' tone (bold line = average of the ${G.y} voters, faces = individual members) move against payrolls, unemployment and inflation. Macro lines are <b>indexed to their own low-to-high range</b> for the period shown so they can share the picture – the exact values are in the readout. <i>2022–2025 voters are taken from the official FOMC statements (a member who voted at only some meetings is still counted – see their panel). Former members' lines stop when they left.</i> <a href="#" id="hm">How the tone score is built →</a></div>
+  <div class="ctl"><button class="btn sm" id="play">▶ Play</button><button class="btn sm" id="rst">↺</button>
+   <span class="lab" style="margin-left:6px">Speed</span><span class="seg" id="rsp">${[.5,1,2,4].map(s=>`<button data-v="${s}" class="${R.speed===s?"on":""}">${s}×</button>`).join("")}</span>
+   <span class="lab">Start</span><select id="rst0">${opts}</select>
+   <span class="lab">Length</span><span class="seg" id="rln">${[[6,"6M"],[12,"12M"],["latest","To latest"]].map(([k,l])=>`<button data-v="${k}" class="${R.len===k?"on":""}">${l}</button>`).join("")}</span>
+   <span class="lab">Voters of</span><span class="seg" id="rvo">${[["start","Start year"],...[2022,2023,2024,2025,2026,2027,2028].map(y=>[y,y])].map(([k,l])=>`<button data-v="${k}" class="${R.voters===k?"on":""}">${l}</button>`).join("")}</span></div>
+  <div class="ctl" style="margin-top:2px"><span class="lab">Overlay</span>${Object.keys(OV).map(k=>`<span class="tg ${R.ov[k]?"on":""}" data-k="${k}">${ovSample(k)}${OV[k][0]}</span>`).join("")}</div>
+  <div class="ctl" style="margin-top:2px"><span class="lab">Show</span><span class="seg" id="rsh"><button data-v="agg" class="${R.show==="agg"?"on":""}">${G.y} FOMC voters (aggregate)</button><button data-v="each" class="${R.show==="each"?"on":""}">…and each voter</button></span>${ringLegend()}</div>
+  <div class="chartbox" id="rch"></div>
+  <input type="range" id="scrub" min="0" max="1000" value="0"><div class="readout" id="rro"></div><div class="rv" id="rrv"></div>
+  <div class="hint" style="margin-top:10px;letter-spacing:.5px;font-weight:700">CLICK ANY FACE TO ADD IT TO THE CHART (BOLD COLOURED LINE + ITS OWN FACE). ${G.y} VOTERS ARE LISTED FIRST.</div>
+  <div class="faces" id="rfc">${memOrder.map(id=>face(MEM[id],40,R.add.has(id)?"pick":"",'data-id="'+id+'"')).join("")}</div>`;
+  $("#hm").onclick=e=>{e.preventDefault();S.tab="method";render()};
+  const stop=()=>{R.playing=false;$("#play").innerHTML="▶ Play";$("#pl").textContent="▶"};
+  $("#play").onclick=$("#pl").onclick=()=>{if(R.playing)return stop();if(R.pos>=i1-.01)R.pos=i0;R.playing=true;R.last=0;$("#play").innerHTML="❚❚ Pause";$("#pl").textContent="❚❚";requestAnimationFrame(tick)};
+  $("#rst").onclick=()=>{stop();R.pos=i0;frame()};
+  $$("#rsp button").forEach(b=>b.onclick=()=>{R.speed=+b.dataset.v;$$("#rsp button").forEach(x=>x.classList.toggle("on",x===b))});
+  $("#rst0").onchange=e=>{R.start=+e.target.value;R.pos=R.start;stop();drawReplay()};
+  $$("#rln button").forEach(b=>b.onclick=()=>{R.len=b.dataset.v==="latest"?"latest":+b.dataset.v;R.pos=R.start;stop();drawReplay()});
+  $$("#rvo button").forEach(b=>b.onclick=()=>{R.voters=b.dataset.v==="start"?"start":+b.dataset.v;drawReplay()});
+  $$("#replay .tg[data-k]").forEach(t=>t.onclick=()=>{R.ov[t.dataset.k]=!R.ov[t.dataset.k];drawReplay()});
+  $$("#rsh button").forEach(b=>b.onclick=()=>{R.show=b.dataset.v;drawReplay()});
+  $$("#rfc .face").forEach(f=>f.onclick=()=>{const id=f.dataset.id;R.add.has(id)?R.add.delete(id):R.add.add(id);f.classList.toggle("pick");frame()});
+  const sc=$("#scrub");sc.oninput=()=>{stop();R.pos=i0+(i1-i0)*sc.value/1000;frame()};
+  function tick(ts){if(!R.playing)return;if(!R.last)R.last=ts;const dt=(ts-R.last)/1000;R.last=ts;R.pos+=dt*R.speed*1.4;if(R.pos>=i1){R.pos=i1;frame();stop();return}frame();requestAnimationFrame(tick)}
+  frame();
+  function frame(){
+    const [a,b]=replayWin(),pos=Math.max(a,Math.min(b,R.pos)),Wd=1000,Ht=430,pl=74,pr=26,pt=26,pb=34;
+    const X=i=>pl+(i-a)/(b-a)*(Wd-pl-pr),Y=v=>pt+(100-v)/200*(Ht-pt-pb);
+    const val=(arr,p)=>{const i=Math.floor(p),f=p-i;const v0=arr[i],v1=arr[Math.min(i+1,arr.length-1)];if(v0==null)return null;if(v1==null||f===0)return v0;return v0+(v1-v0)*f};
+    const path=(arr,color,w,dash,op=1)=>{let d="",pen=false;for(let i=a;i<=Math.floor(pos);i++){if(arr[i]==null){pen=false;continue}d+=(pen?"L":"M")+X(i).toFixed(1)+","+Y(arr[i]).toFixed(1);pen=true}
+      const fl=Math.floor(pos);if(pos>fl&&arr[fl]!=null&&arr[Math.min(fl+1,b)]!=null){const hv=val(arr,pos);d+="L"+X(pos).toFixed(1)+","+Y(hv).toFixed(1)}
+      return d?`<path d="${d}" fill="none" stroke="${color}" stroke-width="${w}" stroke-dasharray="${dash||"none"}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`:""};
+    let svg=`<svg viewBox="0 0 ${Wd} ${Ht}"><rect x="${pl}" y="${pt}" width="${Wd-pl-pr}" height="${Ht-pt-pb}" fill="url(#rg)" rx="6"/><defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9382f" stop-opacity=".10"/><stop offset=".5" stop-color="#9aa6ba" stop-opacity=".04"/><stop offset="1" stop-color="#2f6fe4" stop-opacity=".10"/></linearGradient></defs>`;
+    [100,50,0,-50,-100].forEach(v=>{svg+=`<line x1="${pl}" x2="${Wd-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-dasharray="${v===0?"4 4":"none"}"/><text x="${pl-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--faint)" dx="${0}">${v>0?"+"+v:v}</text>`});
+    svg+=`<text x="${pl+6}" y="${pt+14}" font-size="10.5" font-weight="700" fill="var(--hawk)">HAWKISH ↑</text><text x="${pl+6}" y="${Ht-pb-8}" font-size="10.5" font-weight="700" fill="var(--dove)">DOVISH ↓</text>`;
+    for(let i=a;i<=b;i++){const mo=D.months[i];if((b-a<=14)||mo.endsWith("-01")||mo.endsWith("-07"))svg+=`<text x="${X(i)}" y="${Ht-12}" text-anchor="middle" font-size="11" fill="var(--faint)">${mlab(mo)}</text>`}
+    // macro overlays
+    const macroKey={nfp3:"nfp3",unemp:"unemp",cpi:"cpi",corecpi:"corecpi",corepce:"corepce",ffr:"ffr"};const labs=[];
+    for(const k in R.ov){if(!R.ov[k])continue;const arr=D.macro[macroKey[k]],win=arr.slice(a,b+1).filter(v=>v!=null);if(!win.length)continue;const lo=Math.min(...win),hi=Math.max(...win),rg=hi-lo||1;
+      const idx=arr.map(v=>v==null?null:-90+(v-lo)/rg*180);svg+=path(idx,OV[k][1],k==="ffr"?1.8:2.2,dashFor(k),.95);
+      const cv=val(arr,pos),cy=val(idx,pos);if(cy!=null)labs.push({k,y:Y(cy),cv})}
+    labs.sort((p,q)=>p.y-q.y);for(let j=1;j<labs.length;j++)if(labs[j].y-labs[j-1].y<12)labs[j].y=labs[j-1].y+12;
+    labs.forEach(l=>{svg+=`<circle cx="${pl-4}" cy="${l.y-3}" r="3.5" fill="${OV[l.k][1]}"/><text x="${pl-10}" y="${l.y}" text-anchor="end" font-size="10.5" font-weight="700" fill="${OV[l.k][1]}">${ovFmt(l.k,l.cv)}</text>`});
+    // tone lines
+    const tg=[],all=B("FED").tone;const heads=[];
+    const gArr=Array.from({length:nM()},(_,i)=>grp("FED",G.ids,i));
+    if(R.show==="each")G.ids.forEach(id=>{svg+=path(all[id],"#7b879c",1.2,"",.55);const v=val(all[id],pos);if(v!=null)heads.push({id,y:Y(v),size:26})});
+    svg+=path(gArr,"#0b0f1a",3.4,"");
+    [...R.add].forEach((id,j)=>{const c=PAL[j%PAL.length];svg+=path(all[id],c,3,"");const v=val(all[id],pos);if(v!=null)heads.push({id,y:Y(v),size:34,c})});
+    const gv=val(gArr,pos);svg+=`<line x1="${X(pos)}" x2="${X(pos)}" y1="${pt}" y2="${Ht-pb}" stroke="var(--faint)" stroke-dasharray="3 4" opacity=".6"/></svg>`;
+    let ov="";
+    if(gv!=null)ov+=`<div class="bubble" style="left:${X(pos)/Wd*100}%;top:${Y(gv)/Ht*100}%">${G.ids.filter(id=>val(all[id],pos)!=null).length}<small>FOMC</small></div>`;
+    heads.forEach(h=>{const m=MEM[h.id];ov+=`<div class="fl" style="left:${X(pos)/Wd*100}%;top:${h.y/Ht*100}%">${face(m,h.size)}</div>`});
+    $("#rch").innerHTML=svg+ov;
+    // readout
+    const mi=Math.floor(pos+.0001);$("#scrub").value=b>a?Math.round((pos-a)/(b-a)*1000):0;
+    $("#rro").innerHTML=`<b>${mlab(D.months[mi])}</b> &nbsp; ${G.y} voters avg <b style="color:${toneColor(gv)}">${gv==null?"–":sg(gv)}</b> · ${toneLabel(gv)}`;
+    let rv="";for(const k in R.ov)if(R.ov[k])rv+=`<span><i style="background:${OV[k][1]}"></i>${OV[k][0]} <b>${ovFmt(k,D.macro[k][mi])}</b></span>`;
+    rv+=`<span><i style="background:#0b0f1a"></i>${G.y} FOMC voters (avg) <b>${gv==null?"–":sg(gv)}</b></span>`;
+    [...R.add].forEach((id,j)=>{const v=all[id][mi];rv+=`<span><i style="background:${PAL[j%PAL.length]}"></i>${MEM[id].short} <b>${v==null?"–":sg(v)}</b></span>`});
+    $("#rrv").innerHTML=rv}
+  S._rframe=frame}
+
+/* ---------- multi-panel tone shift ---------- */
+function drawShift(){
+  const host=$("#shift"),n=nM();const per=S.tsPeriod;const len=per==="All"?n:parseInt(per);const a=Math.max(0,n-len),b=n-1;
+  const defs=[...groupDefs()];[...S.tsAdd].forEach((id,j)=>defs.push(memDef(id,PAL[j%PAL.length])));
+  const memOrder=B("FED").members.filter(m=>B("FED").tone[m.id].some(v=>v!=null));
+  host.innerHTML=`<h2>How tone has shifted – and what the data did meanwhile</h2>
+  <div class="hint">Top: dove(−) ↔ hawk(+) tone for voter groups and any members you pick. Below: payrolls, unemployment and inflation on the same time axis (hover anywhere – all panels move together). Click a legend item to hide it.</div>
+  <div class="ctl"><span class="lab">Period</span><span class="seg" id="tp">${[["6","6M"],["12","12M"],["18","18M"],["36","36M"],["All","All ("+n+"M)"]].map(([k,l])=>`<button data-v="${k}" class="${per===k?"on":""}">${l}</button>`).join("")}</span><span class="seg" id="tm"><button data-v="charts" class="${S.tsMode==="charts"?"on":""}">Charts</button><button data-v="table" class="${S.tsMode==="table"?"on":""}">Table</button></span></div>
+  <div class="ctl" style="margin-top:0">${ringLegend()}</div>
+  <div class="hint" style="font-weight:700;letter-spacing:.5px;font-size:10.5px">ADD MEMBERS</div>
+  <div class="faces" id="tf">${memOrder.map(m=>face(m,38,S.tsAdd.has(m.id)?"pick":"",'data-id="'+m.id+'"')).join("")}</div>
+  <div id="tsbody"></div>`;
+  $$("#tp button").forEach(x=>x.onclick=()=>{S.tsPeriod=x.dataset.v;drawShift()});
+  $$("#tm button").forEach(x=>x.onclick=()=>{S.tsMode=x.dataset.v;drawShift()});
+  $$("#tf .face").forEach(f=>f.onclick=()=>{const id=f.dataset.id;S.tsAdd.has(id)?S.tsAdd.delete(id):S.tsAdd.add(id);drawShift()});
+  const body=$("#tsbody");
+  const mac=D.macro;
+  const panels=[
+    {title:"Tone (−100 dovish … +100 hawkish)",h:300,type:"tone",series:defs.filter(d=>!S.hidden.has(d.key)).map(d=>({...d,vals:Array.from({length:b-a+1},(_,j)=>d.fn(a+j))})),fixed:[-100,100],fmt:v=>sg(v),legend:defs},
+    {title:"Nonfarm payrolls – monthly change (thousands)",h:130,type:"bars",series:[{key:"nfp",name:"NFP change",color:"#2f6fa8",vals:mac.nfp.slice(a,b+1)},{key:"nfp3",name:"3-mo avg",color:"#1b2a41",vals:mac.nfp3.slice(a,b+1)}],fmt:v=>Math.round(v)+"k"},
+    {title:"Unemployment rate (%)",h:110,type:"line",series:[{key:"unemp",name:"Unemployment",color:"#7c3aed",vals:mac.unemp.slice(a,b+1)}],fmt:v=>v.toFixed(1)+"%"},
+    {title:"Inflation, y/y (%)",h:140,type:"line",series:[{key:"cpi",name:"CPI y/y",color:"#ea580c",dash:"7 4",vals:mac.cpi.slice(a,b+1)},{key:"corecpi",name:"Core CPI y/y",color:"#db2777",dash:"2 3 7 3",vals:mac.corecpi.slice(a,b+1)},{key:"corepce",name:"Core PCE y/y",color:"#0f766e",dash:"11 4",vals:mac.corepce.slice(a,b+1)}],fmt:v=>v.toFixed(2)+"%"},
+    {title:"Fed funds rate, actual (%)",h:110,type:"line",series:[{key:"ffr",name:"Fed funds (effective)",color:"#64748b",vals:mac.ffr.slice(a,b+1)}],fmt:v=>v.toFixed(2)+"%"}];
+  if(S.tsMode==="table"){
+    const cols=[...panels[0].series,...panels.slice(1).flatMap(p=>p.series)];
+    body.innerHTML=`<div style="overflow:auto;max-height:560px"><table><tr><th>Month</th>${cols.map(c=>`<th class="n" style="color:${c.color}">${esc(c.name)}</th>`).join("")}</tr>${Array.from({length:b-a+1},(_,j)=>b-a-j).map(j=>`<tr><td>${mlab(D.months[a+j])}</td>${cols.map(c=>`<td class="n">${c.vals[j]==null?"–":(c.key==="nfp"||c.key==="nfp3")?Math.round(c.vals[j])+"k":(c.fn||c.key.startsWith("g")||c.key.startsWith("m"))?sg(c.vals[j]):c.vals[j].toFixed(2)}</td>`).join("")}</tr>`).join("")}</table></div>`;return}
+  const Wd=1000,pl=56,pr=16;const X=j=>pl+(j/(b-a||1))*(Wd-pl-pr);
+  let html=`<div class="chartbox" id="stack" style="position:relative">`;
+  panels.forEach((p,pi)=>{
+    const all=p.series.flatMap(s=>s.vals),[lo,hi]=p.fixed||niceExt(all,.1),Ht=p.h,pt=pi===0?12:16,pb=pi===panels.length-1?24:8;
+    const Y=v=>pt+(hi-v)/(hi-lo)*(Ht-pt-pb);
+    let svg=`<div style="font-size:11.5px;font-weight:700;margin:${pi?8:0}px 0 0 ${pl}px;color:var(--ink)">${p.title}${pi===0?`<div class="legend" style="font-weight:400;margin-top:3px">${p.legend.map(d=>`<span class="lg" data-k="${d.key}" style="cursor:pointer;opacity:${S.hidden.has(d.key)?.35:1}"><svg width="22" height="8" style="vertical-align:middle"><line x1="0" y1="4" x2="22" y2="4" stroke="${d.color}" stroke-width="2.6" stroke-dasharray="${d.dash||"none"}"/></svg> ${esc(d.name)}</span>`).join("")}</div>`:""}</div>`;
+    svg+=`<svg class="pn" viewBox="0 0 ${Wd} ${Ht}" data-pi="${pi}"><rect x="${pl}" y="${pt}" width="${Wd-pl-pr}" height="${Ht-pt-pb}" fill="${pi===0?"url(#tg)":"none"}"/>${pi===0?`<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9382f" stop-opacity=".10"/><stop offset=".5" stop-color="#9aa6ba" stop-opacity=".03"/><stop offset="1" stop-color="#2f6fe4" stop-opacity=".10"/></linearGradient></defs>`:""}`;
+    (p.fixed?[100,50,0,-50,-100]:ticks(lo,hi,3)).forEach(t=>{svg+=`<line x1="${pl}" x2="${Wd-pr}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)" stroke-dasharray="${t===0?"4 4":"none"}"/><text x="${pl-6}" y="${Y(t)+4}" text-anchor="end" font-size="10.5" fill="var(--faint)">${p.type==="tone"&&t>0?"+"+t:(+t.toFixed(2))}</text>`});
+    if(pi===panels.length-1){const st=(b-a)>30?6:(b-a)>14?3:1;for(let j=0;j<=b-a;j+=st)svg+=`<text x="${X(j)}" y="${Ht-6}" text-anchor="middle" font-size="10.5" fill="var(--faint)">${mlab(D.months[a+j])}</text>`}
+    if(p.type==="bars"){const bw=Math.max(2,(Wd-pl-pr)/(b-a+1)*.62);p.series[0].vals.forEach((v,j)=>{if(v==null)return;const y0=Y(Math.max(0,lo)),y1=Y(v);svg+=`<rect x="${X(j)-bw/2}" y="${Math.min(y0,y1)}" width="${bw}" height="${Math.abs(y1-y0)}" fill="${v>=0?"#2f6fa8":"#e08a2b"}" rx="1.5"/>`})}
+    p.series.forEach((s,si)=>{if(p.type==="bars"&&si===0)return;let d="",pen=false;s.vals.forEach((v,j)=>{if(v==null){pen=false;return}d+=(pen?"L":"M")+X(j).toFixed(1)+","+Y(v).toFixed(1);pen=true});
+      svg+=`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.w||2}" stroke-dasharray="${s.dash||"none"}" stroke-linejoin="round" stroke-linecap="round"/>`;
+      if(p.type==="tone"){const lj=s.vals.map((v,j)=>v==null?-1:j).reduce((x,y)=>Math.max(x,y),-1);if(lj>=0){const m=s.mid&&MEM[s.mid];svg+=m?`<foreignObject x="${X(lj)-13}" y="${Y(s.vals[lj])-13}" width="26" height="26"><div xmlns="http://www.w3.org/1999/xhtml">${face(m,26)}</div></foreignObject>`:`<circle cx="${X(lj)}" cy="${Y(s.vals[lj])}" r="3.6" fill="${s.color}"/>`}}});
+    svg+=`<line class="xh" x1="0" x2="0" y1="${pt}" y2="${Ht-pb}" stroke="var(--ink)" opacity="0" stroke-dasharray="3 3"/></svg>`;
+    html+=svg});
+  html+=`</div>`;body.innerHTML=html;
+  $$(".lg",body).forEach(l=>l.onclick=()=>{S.hidden.has(l.dataset.k)?S.hidden.delete(l.dataset.k):S.hidden.add(l.dataset.k);drawShift()});
+  const stack=$("#stack"),tip=$("#tip");
+  stack.onmousemove=e=>{const sv=$("svg.pn",stack).getBoundingClientRect();const rel=(e.clientX-sv.left)/sv.width*Wd;const j=Math.round((rel-pl)/(Wd-pl-pr)*(b-a));
+    if(j<0||j>b-a){stack.onmouseleave();return}
+    $$(".xh",stack).forEach(l=>{l.setAttribute("x1",X(j));l.setAttribute("x2",X(j));l.setAttribute("opacity",.55)});
+    let t=`<b>${mlab(D.months[a+j])}</b><br>`;panels.forEach(p=>p.series.forEach(s=>{const v=s.vals[j];if(v!=null)t+=`<i style="background:${s.color}"></i>${esc(s.name)}: <b>${p.fmt(v)}</b><br>`}));
+    tip.innerHTML=t;tip.style.display="block";tip.style.left=Math.min(e.clientX+16,innerWidth-230)+"px";tip.style.top=(e.clientY+scrollY+12)+"px"};
+  stack.onmouseleave=()=>{$$(".xh",stack).forEach(l=>l.setAttribute("opacity",0));tip.style.display="none"}}
+
+/* ============================ Market path ============================ */
+function rMarket(){
+  const mk=D.market,el=$("#view");
+  const st=mk.strip||[],mt=mk.meetings||[];
+  const W=1000,H=300,pl=56,pr=16,pt=14,pb=34;
+  let chart="";
+  if(st.length){const lo=Math.min(mk.effr,...st.map(s=>s.rate))-.15,hi=Math.max(mk.effr,...st.map(s=>s.rate))+.15,Y=v=>pt+(hi-v)/(hi-lo)*(H-pt-pb),bw=(W-pl-pr)/st.length;
+    chart=`<svg viewBox="0 0 ${W} ${H}" style="width:100%">`+ticks(lo,hi,5).map(t=>`<line x1="${pl}" x2="${W-pr}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)"/><text x="${pl-6}" y="${Y(t)+4}" text-anchor="end" font-size="11" fill="var(--faint)">${t.toFixed(2)}</text>`).join("")+
+    st.map((s,i)=>`<rect x="${pl+i*bw+bw*.18}" y="${Y(Math.max(s.rate,lo))}" width="${bw*.64}" height="${Math.max(1,Y(lo)-Y(s.rate))}" fill="${s.rate>=mk.effr?"#e5867f":"#7da6ec"}" rx="3"/><text x="${pl+i*bw+bw/2}" y="${H-pb+14}" text-anchor="middle" font-size="10.5" fill="var(--faint)">${mlab(s.month)}</text><text x="${pl+i*bw+bw/2}" y="${Y(s.rate)-5}" text-anchor="middle" font-size="10" fill="var(--mut)">${s.rate.toFixed(2)}</text>`).join("")+
+    `<line x1="${pl}" x2="${W-pr}" y1="${Y(mk.effr)}" y2="${Y(mk.effr)}" stroke="var(--ink)" stroke-dasharray="5 4"/><text x="${W-pr}" y="${Y(mk.effr)-5}" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink)">EFFR ${(+mk.effr).toFixed(2)}%</text></svg>`}
+  else chart=`<div class="empty">No futures strip available (source unreachable on last build).</div>`;
+  const rows=mt.map((m,i)=>{const bp=m.bp,pc=bp<0?Math.min(1,-bp/25):0,ph=bp>0?Math.min(1,bp/25):0,pn=1-pc-ph;
+    return `<tr><td><b>${dlab(m.date)}</b>${i===0?' <span class="pill p-n">next</span>':""}</td><td class="n">${bp>=0?"+":"−"}${Math.abs(bp).toFixed(1)} bp</td><td style="width:45%"><div class="bar"><i style="width:${pc*100}%;background:#2f6fe4"></i><i style="width:${pn*100}%;background:#cfd6e2"></i><i style="width:${ph*100}%;background:#d9382f"></i></div></td><td class="n" style="font-size:11.5px;color:var(--mut)">cut ${Math.round(pc*100)}% · hold ${Math.round(pn*100)}% · hike ${Math.round(ph*100)}%</td></tr>`}).join("");
+  el.innerHTML=`<div class="card"><h2>Fed funds futures strip</h2><div class="hint">Implied average fed funds rate by contract month (100 − price) against the effective rate. Source: ${esc(mk.source||"")}.</div>${chart}</div>
+  <div class="card"><h2>Pricing of the next meetings</h2><div class="hint">Implied change per meeting from the month-average method, expressed in bp and as a simple 25 bp-step probability split. A rough read, not a CME FedWatch replica.</div><table><tr><th>Meeting</th><th class="n">Implied</th><th>Cut / hold / hike</th><th></th></tr>${rows||'<tr><td colspan=4 class="empty">No meetings priced.</td></tr>'}</table></div>
+  <div class="card"><h2>Tone vs. the market</h2><div class="hint">FOMC all-participant average tone now: <b>${(()=>{const v=mean(currentMem("FED").map(m=>latest("FED",m.id)).filter(x=>x!=null));return v==null?"–":sg(v)})()}</b>. Sanity checks on the Method tab show how tone has related to the later rate path – it correlates, but this tool cannot prove the tone adds information beyond the rate path itself.</div></div>`}
+
+/* ============================ ECB / BoE / BoJ ============================ */
+function rBanks(){
+  const el=$("#view"),bk=S.bank,Bk=B(bk);
+  const ms=Bk.members.filter(m=>Bk.tone[m.id].some(v=>v!=null));
+  const defs=[{key:"avg",name:bk+" average",color:"#0b0f1a",w:3,fn:i=>mean(ms.map(m=>Bk.tone[m.id][i]).filter(v=>v!=null))},...ms.map((m,j)=>({key:m.id,name:m.short,color:PAL[j%PAL.length],w:1.6,fn:i=>Bk.tone[m.id][i]}))];
+  el.innerHTML=`<div class="card"><div class="ctl" style="margin:0 0 6px"><span class="seg" id="bks">${["ECB","BoE","BoJ"].map(k=>`<button data-v="${k}" class="${bk===k?"on":""}">${k}</button>`).join("")}</span></div>
+   <div class="note" style="margin:8px 0"><b>Member lists are marked "verify".</b> They are seeded from memory of the current committees and have not been checked against the central bank's own site. Check them before relying on any line. Text coverage is news headlines only (no speeches fetched), and the same phrase lists as the Fed are used – they were written for Fed language.</div>
+   <h2>${bk} spectrum</h2><div class="hint">Latest tone per member (−100 very dovish … +100 very hawkish). Scale for this bank is its own: the 93rd percentile of |x| within ${bk}.</div><div id="spec"></div></div>
+   <div class="card"><h2>${bk} tone over time</h2><div class="chartbox" id="bch"></div></div>
+   <div class="card"><h2>Members</h2><table><tr><th>Member</th><th>Role</th><th class="n">Scored items</th><th class="n">Latest tone</th><th></th></tr>${Bk.members.map(m=>`<tr><td>${esc(m.name)}</td><td>${esc(m.role)}</td><td class="n">${Bk.counts[m.id]}</td><td class="n">${latest(bk,m.id)==null?"insufficient evidence":sg(latest(bk,m.id))}</td><td><span class="pill p-h" style="background:#fde5cf;color:#b5621a">verify</span></td></tr>`).join("")}</table></div>`;
+  $$("#bks button").forEach(b=>b.onclick=()=>{S.bank=b.dataset.v;rBanks()});
+  spectrum($("#spec"),bk,{year:"all",view:"live",zoom:true});
+  const n=nM(),Wd=1000,Ht=320,pl=56,pr=16,pt=12,pb=26,X=i=>pl+i/(n-1)*(Wd-pl-pr),Y=v=>pt+(100-v)/200*(Ht-pt-pb);
+  let svg=`<svg viewBox="0 0 ${Wd} ${Ht}">`+[100,50,0,-50,-100].map(t=>`<line x1="${pl}" x2="${Wd-pr}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)" stroke-dasharray="${t===0?"4 4":"none"}"/><text x="${pl-6}" y="${Y(t)+4}" text-anchor="end" font-size="10.5" fill="var(--faint)">${t>0?"+"+t:t}</text>`).join("");
+  D.months.forEach((mo,i)=>{if(mo.endsWith("-01")||mo.endsWith("-07"))svg+=`<text x="${X(i)}" y="${Ht-8}" text-anchor="middle" font-size="10.5" fill="var(--faint)">${mlab(mo)}</text>`});
+  defs.forEach(d=>{let p="",pen=false;for(let i=0;i<n;i++){const v=d.fn(i);if(v==null){pen=false;continue}p+=(pen?"L":"M")+X(i).toFixed(1)+","+Y(v).toFixed(1);pen=true}svg+=`<path d="${p}" fill="none" stroke="${d.color}" stroke-width="${d.w}" opacity="${d.key==="avg"?1:.8}" stroke-linejoin="round"/>`});
+  $("#bch").innerHTML=svg+`</svg><div class="legend" style="margin-top:6px">${defs.map(d=>`<span><i style="background:${d.color}"></i>${esc(d.name)}</span>`).join("")}</div>`}
+
+/* ============================ Method ============================ */
+function rMethod(){
+  const el=$("#view"),P=D.meta.params,F=B("FED"),sc=F.scale;
+  const H=D.phrases.filter(p=>p.side==="H"),Dv=D.phrases.filter(p=>p.side==="D");
+  const prow=p=>`<tr><td>${esc(p.label)}${p.id===D.flip_id?` <span class="pill p-n">flips sign before ${P.flip_before.slice(0,7)}</span>`:""}${p.consume?` <span class="pill p-n" title="matched words are removed so later phrases don't count them again">matched first</span>`:""}</td><td class="n">${p.weight}</td><td><details class="rx"><summary>show</summary><code>${esc(p.pattern)}</code><div class="hint">example: “${esc(p.example)}”</div></details></td></tr>`;
+  const cov=B("FED").members.map(m=>{const its=D.items[m.id]||[],sp=its.filter(i=>i.k==="s").length,fl=F.flag[m.id],own=fl.filter(x=>x==="o").length,car=fl.filter(x=>x==="c").length;return `<tr><td>${esc(m.name)}</td><td class="n">${F.seen[m.id]||0}</td><td class="n">${its.length}</td><td class="n">${sp}</td><td class="n">${own}</td><td class="n">${car}</td><td>${F.mu[m.id]==null?"insufficient evidence (&lt; "+P.min_items+" scored items) – no line":""}</td></tr>`}).join("");
+  const ck=D.checks,rf=D.reference_checks;const f=v=>v==null?"n/a":(v>0?"+":"")+v.toFixed(2);
+  const lg=D.log.map(l=>`<tr><td>${esc(l.source)}</td><td><span class="pill ${l.status==="ok"?"p-d":l.status==="demo"?"p-n":"p-vh"}">${l.status}</span></td><td class="hint">${esc(l.msg)}</td></tr>`).join("");
+  el.innerHTML=`<div class="card" style="max-width:1100px"><h2 style="font-size:17px">How the dove–hawk number is made (nothing hidden)</h2>
+  <div class="hint" style="margin-bottom:10px">The score is a <b>counting exercise on words</b>, not an opinion and not a trained AI model. Every step below is the exact code that runs. Click any member's face (or a card) and open "Why this score?" to see the actual headlines/speeches and arithmetic behind any month.</div>
+  <h3>1 · What the number means</h3><ul class="step"><li><b>−100 … +100.</b> Negative = <i>dovish</i> (favouring easier policy: cuts, weak labour market, falling inflation). Positive = <i>hawkish</i> (favouring tighter policy: hikes, "no rush to cut", sticky inflation, solid jobs). 0 = balanced or no strong signal.</li>
+  <li><b>It measures wording, not votes or intentions.</b> It can be wrong about a person's true view and says nothing about how they will vote. It is a way to see the direction and speed of change in how members talk.</li>
+  <li><b>The scale is relative to this dataset, not absolute.</b> +60 does not mean "60% hawkish"; it means the wording is as hawkish as the strongest ~7% of member-months in ${D.months[0]} → ${D.months[D.months.length-1]}. It is <i>not</i> comparable with ITC's −1…+1 scale.</li></ul>
+  <h3>2 · The calculation, step by step</h3><ol class="step">
+  <li><b>Collect text.</b> (a) Full text of every speech on federalreserve.gov by Board members (governors only – regional presidents' speeches are not on that site, see limit 2). (b) Google News headlines (+ short snippet when available) mentioning each member by name, searched month by month; Bing News for the latest month. Only items that mention the member's surname are kept.</li>
+  <li><b>Match phrases.</b> Each item is searched for the hawkish and dovish phrase families in section 4. Each hit adds its <b>weight</b> to H (hawkish total) or D (dovish total). Every occurrence counts, so repeating a phrase counts again. A whole speech is scored as <i>one</i> item using totals over its entire text. Longer phrases marked "matched first" are removed before shorter ones are searched, so "no case for cutting rates" is not also counted as "cutting rates".</li>
+  <li><b>Item score</b> s = (H − D) ÷ (H + D + 1). It lies between −1 and +1; the "+1" in the denominator stops a single weak hit from reading as 100%. Items with no phrase match (H = D = 0) are <b>ignored</b> – they carry no information in this method.</li>
+  <li><b>Item weight.</b> Speech = ${P.speech_weight}. Headline = ${P.headline_weight} (+${P.snippet_bonus} if a snippet exists). If one member has more than ${P.daily_news_cap} units of news on the same day (syndicated copies of one story), all that day's news is scaled down so the total is ${P.daily_news_cap}.</li>
+  <li><b>Member-month average.</b> For month M: x̄ = Σ(weight × s) ÷ Σ weight over items dated in M (full weight) <i>plus</i> items from the ${P.lookback_days} days before M (half weight).</li>
+  <li><b>Shrink toward their own average.</b> x = (Σ weight×s + K × μ) ÷ (Σ weight + K), with K = ${P.shrink_K} and μ = the member's own average item score over the whole period shown. A month with only one headline barely moves from the member's usual level; a month with lots of text moves a lot.</li>
+  <li><b>No items in M → carried forward, but only briefly.</b> If M has no scored item <i>dated in M</i>, the previous month's value is repeated for at most ${P.max_carry} silent months in a row (counted as "carried" in the coverage table); after that the line has a <b>gap</b> – no value is invented. A member with fewer than ${P.min_items} scored items in the whole period gets <b>no tone line at all</b> ("insufficient evidence").</li>
+  <li><b>Scale to ±100.</b> tone = 100 × tanh(${P.tanh_k} × x ÷ ${sc}) where ${sc} is the ${Math.round(P.scale_percentile*100)}th percentile of |x| across all members and months. tanh bends the scale so extremes flatten toward ±100 instead of overshooting.</li>
+  <li><b>Groups.</b> A group ("2026 voters", "All FOMC") is the simple average of its members' tone for the month – each member who has a line counts equally.</li></ol>
+  <h3>3 · Fixed parameters</h3><table><tr><th>Setting</th><th>Value</th><th>Why</th></tr>
+  <tr><td>Speech / headline weight</td><td>${P.speech_weight} / ${P.headline_weight} (+${P.snippet_bonus} with snippet)</td><td>A full speech says more than a headline. A judgement call, not tested.</td></tr>
+  <tr><td>Daily cap on news per member</td><td>${P.daily_news_cap} units</td><td>Stops one story syndicated 20 times dominating.</td></tr>
+  <tr><td>Look-back inside a month</td><td>this month ×1, previous ${P.lookback_days} days ×${P.lookback_weight}</td><td>Smooths timing noise.</td></tr>
+  <tr><td>Shrinkage K</td><td>${P.shrink_K}</td><td>Judgement call; larger = flatter lines.</td></tr>
+  <tr><td>Scale divisor</td><td>${sc}</td><td>Recomputed on every refresh (${Math.round(P.scale_percentile*100)}th percentile of |x|). <b>Past values can therefore change when new data arrive.</b></td></tr>
+  <tr><td>Max months a silent value is repeated</td><td>${P.max_carry}</td><td>Beyond this the line breaks rather than pretending to know.</td></tr>
+  <tr><td>Minimum scored items for a tone line</td><td>${P.min_items}</td><td>Below this one or two headlines would define a person's whole history.</td></tr>
+  <tr><td>"hold / pause" sign flip</td><td>before ${P.flip_before}</td><td>Before the first 2024 cut, talk of "pausing/holding" meant ending hikes (dovish). From then on, "hold" in a cutting debate is hawkish.</td></tr></table>
+  <h3>4 · The full phrase lists (this is the whole "model")</h3>
+  <div class="hint">Weights are my judgement (written by the AI that built this page, not by a Fed economist, and not fitted to data). Patterns were first written for 2025–26 language and extended for 2022–23 hiking-cycle language. Open "show" to see the exact pattern. The Method screenshot you sent showed only part of the original lists, so some entries here are my reconstruction.</div>
+  <div class="two"><div><h3 style="color:var(--hawk)">Hawkish phrase families</h3><table><tr><th>Phrase family (plain English)</th><th class="n">Weight</th><th>Exact pattern (regular expression)</th></tr>${H.map(prow).join("")}</table></div>
+  <div><h3 style="color:var(--dove)">Dovish phrase families</h3><table><tr><th>Phrase family (plain English)</th><th class="n">Weight</th><th>Exact pattern (regular expression)</th></tr>${Dv.map(prow).join("")}</table></div></div>
+  <h3>5 · Limits</h3><ul class="step"><li>The phrase weights are my own judgement and have never been checked against human labels.</li><li>Regional presidents are headline-only (their speeches are not on federalreserve.gov).</li><li>Several people won't have enough items for a line.</li><li>Past values can shift slightly on refresh (the scale divisor is recomputed).</li><li>Non-Fed member lists are unverified.</li><li>Tweets, podcasts and video audio are not read.</li><li>The tone correlates with the rate path, but this does not prove it adds information beyond it.</li><li>Voters: ${esc(D.meta.voters_source)}.</li></ul>
+  <h3>6 · Sanity checks</h3><table style="max-width:640px"><tr><th>Correlation of average FOMC tone with…</th><th class="n">This build</th><th class="n">Earlier build (reference)</th></tr>
+  <tr><td>next 3 months' change in fed funds rate</td><td class="n">${f(ck.vs_next3m_ffr_change)}</td><td class="n">${f(rf.vs_next3m_ffr_change)}</td></tr><tr><td>fed funds rate level</td><td class="n">${f(ck.vs_ffr_level)}</td><td class="n">${f(rf.vs_ffr_level)}</td></tr><tr><td>core CPI y/y</td><td class="n">${f(ck.vs_core_cpi)}</td><td class="n">${f(rf.vs_core_cpi)}</td></tr></table>
+  <div class="hint" style="margin-top:6px">Average tone: ${ck.first==null?"n/a":sg(ck.first)} in ${mlab(D.months[0])}, ${ck.mid2024==null?"n/a":sg(ck.mid2024)} in Jul 24, ${sg(ck.last)} latest. Phrase self-test (every example sentence triggers its own phrase): ${ck.phrase_selftest_failures.length?"<b class='tickbad'>FAILED: "+ck.phrase_selftest_failures.join(", ")+"</b>":"<span class='tickok'>passed</span>"}.${D.meta.demo?" <b>These numbers come from synthetic demo data and mean nothing.</b>":""}</div>
+  <h3>7 · Data sources and last build</h3><table><tr><th>Source</th><th>Status</th><th></th></tr>${lg}</table>
+  <h3>8 · Coverage per person (Fed)</h3><div style="overflow:auto"><table><tr><th>Member</th><th class="n">Items seen</th><th class="n">Scored items</th><th class="n">Speeches</th><th class="n">Months with own data</th><th class="n">Months carried</th><th>Note</th></tr>${cov}</table></div></div>`}
+
+/* ============================ boot ============================ */
+let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{if(D&&(S.tab==="fomc"||S.tab==="banks")){const h=$("#spec");if(h)spectrum(h,S.tab==="fomc"?"FED":S.bank,S.tab==="fomc"?{year:S.year,view:S.view,zoom:S.zoom}:{year:"all",view:"live",zoom:true})}},150)});
+load().then(()=>{const h=location.hash.slice(1);const hh=h.split('&');if(TABS.some(t=>t[0]===hh[0]))S.tab=hh[0];const pm=/pos=(\d+)/.exec(h);if(/view=itc/.test(h))S.view='itc';if(pm){S.R.pos=+pm[1];S.R.add=new Set(['waller','daly'])}render()}).catch(e=>{$("#view").innerHTML=`<div class="empty">Could not load data.json (${esc(e)}).<br>Run <code>python -I build_data.py --demo</code> or start <code>python -I server.py</code> and open this page through it.</div>`});
+</script></body></html>

@@ -39,6 +39,7 @@ P = dict(
     speech_weight=3.0, headline_weight=1.0, snippet_bonus=0.3, daily_news_cap=3.0,
     lookback_days=30, lookback_weight=0.5, shrink_K=1.5, tanh_k=1.1,
     scale_percentile=0.93, max_carry=2, min_items=8, flip_before="2024-09-01",
+    warsh_discount=0.6, warsh_from="2026-04-21",   # Warsh: less forward guidance, so his hawk/dove signal counts at 60% from this date
 )
 
 # ------------------------------------------------------------- phrase lists
@@ -81,11 +82,12 @@ PH = [
 ]
 PHRASES = [dict(id=i, side=s, label=l, weight=w, pattern=p, example=e, consume=c) for i, s, l, w, p, e, c in PH]
 FLIP_ID = "h_hold"
-for ph in PHRASES: ph["rx"] = re.compile(ph["pattern"], re.I)
+for ph in PHRASES: ph["rx"] = re.compile(r"(?<![a-z0-9])(?:" + ph["pattern"] + ")", re.I)   # every phrase must start at the start of a word
 
 def score_text(text, date_iso):
     """Returns H, D, {family: count}. Every occurrence counts."""
     t = " " + text.lower().replace("’", "'").replace("‘", "'") + " "   # curly apostrophes: won’t -> won't
+    t = t.replace("n't", " not")   # won't -> wo not, so the negation starts a word
     H = D = 0.0; fam = {}
     for ph in PHRASES:                       # consume-first families are listed first
         n = 0
@@ -234,7 +236,7 @@ def month_of(d): return d[:7]
 def d2date(d): return dt.date.fromisoformat(d)
 
 # ---------------------------------------------------------------- scoring
-def finalize_items(raw_items):
+def finalize_items(raw_items, member_id=None):
     """raw: dicts with d(date), kind, title, text, src, url, snippet(bool). -> scored items (H+D>0 only)."""
     out = []; seen = len(raw_items)
     for it in raw_items:
@@ -242,7 +244,7 @@ def finalize_items(raw_items):
         if H == 0 and D == 0: continue
         base = P["speech_weight"] if it["kind"] == "speech" else P["headline_weight"] + (P["snippet_bonus"] if it.get("snippet") else 0)
         out.append(dict(d=it["d"], k=it["kind"][0], t=it["title"][:200], q=it.get("quote", "")[:300], src=it.get("src", ""), u=it.get("url", ""),
-                        H=round(H, 2), D=round(D, 2), s=round((H - D) / (H + D + 1), 4), w=base, f=fam))
+                        H=round(H, 2), D=round(D, 2), s=round((H - D) / (H + D + 1) * (P["warsh_discount"] if member_id == "warsh" and it["d"] >= P["warsh_from"] else 1), 4), w=base, f=fam))
     # daily cap on news per member
     byday = {}
     for it in out:
@@ -361,7 +363,7 @@ def demo_everything(members_all):
                                 quote=text if kd == "news" else picks[0]["example"], text=text,
                                 src=("federalreserve.gov (demo)" if kd == "speech" else rnd.choice(["Reuters (demo)", "Bloomberg (demo)", "BigGo Finance (demo)", "VT Markets (demo)"])),
                                 url="", snippet=rnd.random() < .5))
-        items[m["id"]], seen[m["id"]] = finalize_items(lst)
+        items[m["id"]], seen[m["id"]] = finalize_items(lst, m["id"])
     return items, seen
 
 def demo_macro():
@@ -524,27 +526,128 @@ def fetch_news_member(m, bank_kw):
     for i in items: uniq[(i["d"], i["title"].lower())] = i
     return list(uniq.values())
 
+def _frac(txt):
+    """'1/4' -> 0.25, '1/2' -> 0.5, '3/4' -> 0.75, '1' -> 1."""
+    txt = txt.strip()
+    if "/" in txt: n, d = txt.split("/"); return int(n) / int(d)
+    try: return float(txt)
+    except ValueError: return None
+
+def _rate(txt):
+    """'3-3/4' -> 3.75, '1/4' -> 0.25, '4' -> 4."""
+    txt = txt.strip(); whole, _, frac = txt.partition("-")
+    if "/" in whole and not frac: return _frac(whole)
+    return float(whole) + (_frac(frac) if frac else 0)
+
+def parse_decision(txt):
+    """('hike'|'cut'|'hold', size in bp, upper bound of the new range) from the statement's policy sentence."""
+    m = re.search(r"decided to (raise|lower|maintain|keep|reduce|increase)\s+the target range for the federal funds rate(?:\s+by\s+([\d/]+)\s+percentage point)?\s*(?:to|at)?\s*([\d/-]+)\s+to\s+([\d/-]+)\s+percent", txt)
+    if not m: return None, 0, None
+    act = {"reduce": "lower", "increase": "raise", "keep": "maintain"}.get(m.group(1), m.group(1))
+    bp = int(round((_frac(m.group(2)) or 0) * 100)) if m.group(2) else None
+    return ("hold" if act == "maintain" else "hike" if act == "raise" else "cut"), (0 if act == "maintain" else bp), _rate(m.group(4))
+
+def dissent_reason(clause):
+    c = clause.lower()
+    mz = re.search(r"by ([\d/]+) percentage point", c); size = f"{int(round((_frac(mz.group(1)) or 0) * 100))}bp " if mz else ""
+    if re.search(r"securities holdings|balance sheet|asset purchases|runoff|redemption", c): return "balance-sheet pace"
+    if re.search(r"easing bias|forward guidance|language|bias", c): return "against easing bias"
+    if re.search(r"preferred (?:at this meeting )?to lower|preferred a reduction|lower the target range", c): return f"wanted a {size}cut".replace("  ", " ")
+    if re.search(r"preferred (?:at this meeting )?to raise|raise the target range", c): return f"wanted a {size}hike".replace("  ", " ")
+    if re.search(r"no change|maintain the target range|preferred to hold", c): return "wanted no change"
+    return clause.strip()[:80]
+
 def live_voters(members):
-    """Official statements: who actually voted (incl. stand-ins)."""
+    """Official statements: who voted (incl. stand-ins), who dissented and why, and each decision."""
     try:
         page = http("https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm").decode("utf-8", "ignore")
     except Exception as e:
         log("FOMC statements (voters)", "FAIL", str(e)[:100]); return None
     urls = sorted(set(re.findall(r"/newsevents/pressreleases/monetary(\d{8})a\.htm", page)))
-    v = {y: set() for y in range(2022, 2026)}; n = 0
+    v = {y: set() for y in range(2022, 2026)}; n = 0; dissents = []; decisions = []
     for d in urls:
         y = int(d[:4])
-        if y not in v: continue
+        if y < 2022 or d > TODAY.strftime("%Y%m%d"): continue
         try: txt = cached("stmt_" + d, lambda: strip_html(http(f"https://www.federalreserve.gov/newsevents/pressreleases/monetary{d}a.htm").decode("utf-8", "ignore")))
         except Exception: continue
-        mt = re.search(r"Voting for the monetary policy action were(.*?)(?:Voting against|For media inquiries|Implementation Note|$)", txt, re.S)
-        ag = re.search(r"Voting against the action was(?:\s|:)?(.*?)(?:For media|Implementation|$)", txt, re.S)
-        seg = (mt.group(1) if mt else "") + " " + (ag.group(1) if ag else "")
-        for m in members:
-            if re.search(r"\b" + m["short"] + r"\b", seg): v[y].add(m["id"])
+        txt = re.sub(r"\s+", " ", txt).replace("\u2011", "-").replace("\u2010", "-")   # non-breaking hyphens in "3-1/2"
+        if not re.search(r"Voting for the (?:monetary policy )?action|approved the following statement for release by a", txt): continue   # e.g. 22 Aug 2025 framework statement: not a meeting
+        iso = f"{d[:4]}-{d[4:6]}-{d[6:]}"
+        act, bp, upper = parse_decision(txt)
+        if bp is None and upper is not None and decisions and decisions[-1].get("upper") is not None:
+            bp = int(round(abs(upper - decisions[-1]["upper"]) * 100))     # 2022-23 statements give the new range, not the size
+        decisions.append(dict(date=iso, action=act, bp=bp or 0, upper=upper))
+        mt = re.search(r"Voting for the (?:monetary policy )?action were(.*?)(?:Voting against|For media inquiries|Implementation Note|$)", txt)
+        ag = re.search(r"Voting against (?:this|the)(?: monetary policy)? action (?:was|were)(.*?)(?:For media|Implementation Note|$)", txt)
+        fseg = re.sub(r"[^.;]*\bvoted as an? (?:alternate|temporary)[^.;]*", "", mt.group(1)) if mt else ""   # "X voted as an alternate member" is not a dissent
+        aseg = ag.group(1) if ag else ""
+        aseg = re.split(r"\.\s+[^.]*?(?:Absent and not voting|voted as an? (?:alternate|temporary))", aseg)[0]   # absent / stand-in members are not dissents
+        alt = " ".join(re.findall(r"[^.;]*\bvoted as an? (?:alternate|temporary)[^.;]*", txt))
+        if y in v:
+            for m in members:
+                if re.search(r"\b" + m["short"] + r"\b", fseg + " " + aseg + " " + alt): v[y].add(m["id"])
+        if aseg:
+            whos = [(w.start(), w.group(0)) for w in re.finditer(r"who (?:preferred|supported|dissented|would have preferred)[^;]*?(?=(?:,? and [A-Z][\w.]* [A-Z]|;|\. |\.$|$))", aseg)]
+            for m in members:
+                hit = re.search(r"\b" + m["short"] + r"\b", aseg)
+                if not hit: continue
+                clause = next((w for pos, w in whos if pos > hit.start()), "")
+                dissents.append(dict(date=iso, id=m["id"], reason=dissent_reason(clause)))
         n += 1
-    log("FOMC statements (voters)", "ok", f"{n} statements parsed")
-    return {y: sorted(s) for y, s in v.items()}
+    log("FOMC statements (voters)", "ok", f"{n} meeting statements, {len(dissents)} dissents")
+    return dict(voters={y: sorted(s) for y, s in v.items()}, dissents=dissents, decisions=decisions)
+
+# ------------------------------------------------------------- themes (what the FOMC talks about)
+THEMES = [
+ ("inflation",  "Inflation & expectations", r"\binflation\w*|\bdisinflation\w*|\bprice (?:stability|pressures?|increases)|\bpce prices|\bcpi\b"),
+ ("labor",      "Labor market",             r"\blabou?r market|\bemployment\b|\bunemployment|\bpayrolls?|\bhiring|\blayoffs?|\bjob (?:gains|growth|openings|market)|\bwages?\b"),
+ ("growth",     "Growth & activity",        r"\beconomic activity|\bgdp\b|\boutput growth|\brecession\w*|\bslowdown|\beconomic growth|\bsoft landing"),
+ ("consumer",   "Consumer spending",        r"\bconsumer spending|\bhousehold spending|\bconsumption\b|\bretail sales|\bconsumer sentiment"),
+ ("housing",    "Housing",                  r"\bhousing\b|\bmortgage\w*|\bhome prices|\bresidential investment|\bshelter\b|\brents?\b"),
+ ("tariffs",    "Tariffs & trade",          r"\btariffs?\b|\btrade polic\w+|\bimport prices|\btrade war"),
+ ("energy",     "Energy & oil",             r"\benergy prices|\boil prices|\bcrude\b|\bgasoline\b|\benergy\b"),
+ ("productivity","Productivity & AI",       r"\bproductivity\b|\bartificial intelligence|\bai\b|\bcapital investment|\btechnolog\w+"),
+ ("finstab",    "Financial conditions & stability", r"\bfinancial (?:conditions|stability|system)|\bbanking (?:system|sector|stress)|\bliquidity\b|\bcredit conditions|\bvaluations?\b"),
+ ("balsheet",   "Balance sheet",            r"\bbalance sheet|\bsecurities holdings|\breserves?\b|\brunoff\b|\bquantitative tightening|\btreasury (?:bills|securities)"),
+ ("neutral",    "Neutral rate & restrictiveness", r"\bneutral (?:rate|level|policy)|\br-star|\brestrictive\w*|\bpolicy stance|\baccommodat\w+"),
+ ("uncertainty","Uncertainty & risks",      r"\buncertaint\w+|\bgeopolitic\w*|\bdownside risks?|\bupside risks?|\brisks? to the outlook"),
+]
+THEME_RX = [(k, label, re.compile(rx, re.I)) for k, label, rx in THEMES]
+
+def theme_rates(txt):
+    words = len(re.findall(r"[A-Za-z]+", txt))
+    if words < 200: return None, words
+    return {k: round(len(rx.findall(txt)) * 1000 / words, 2) for k, _, rx in THEME_RX}, words
+
+def minutes_core(txt):
+    """Policymakers' own discussion: from 'Participants' Views' to the vote (falls back to the staff review)."""
+    txt = re.sub(r"\s+", " ", txt)
+    a = txt.find("Participants' Views"); a = a if a >= 0 else txt.find("Participants’ Views")
+    if a < 0: a = txt.find("Staff Review of the Economic Situation")
+    b = txt.find("Voting for this action", a + 1 if a >= 0 else 0)
+    if a < 0 or b < 0 or b - a < 2000: return ""
+    return txt[a:b]
+
+def build_themes(decisions, speeches_raw):
+    """Per meeting: theme mentions per 1,000 words in the minutes, and in Board speeches given since the previous meeting."""
+    out = []; prev = "2021-12-15"; got = 0
+    allspeech = [it for lst in speeches_raw.values() for it in lst]
+    for dc in decisions:
+        d = dc["date"]; key = d.replace("-", "")
+        mins = None; mw = 0
+        if d <= (TODAY - dt.timedelta(days=21)).isoformat():          # minutes come out three weeks after the meeting
+            try:
+                page = cached("minutes_" + key, lambda: strip_html(http(f"https://www.federalreserve.gov/monetarypolicy/fomcminutes{key}.htm").decode("utf-8", "ignore")))
+                mins, mw = theme_rates(minutes_core(page))
+                if mins: got += 1
+            except Exception: pass
+        sp = [it for it in allspeech if prev < it["d"] <= d]
+        stext = " ".join(re.sub(r"\s+", " ", it["text"]) for it in sp)
+        srates, sw = theme_rates(stext) if sp else (None, 0)
+        out.append(dict(date=d, action=dc["action"], bp=dc["bp"], minutes=mins, minutes_words=mw, speeches=srates, speech_words=sw, n_speeches=len(sp)))
+        prev = d
+    log("FOMC minutes (themes)", "ok" if got else "FAIL", f"{got} of {len(decisions)} meetings")
+    return dict(themes=[dict(id=k, label=l) for k, l, _ in THEMES], meetings=out)
 
 def live_macro():
     n = len(MONTHS); mac = {}; ok = True
@@ -648,6 +751,7 @@ def main():
     t0 = time.time()
     fed = FED; all_bank = {"FED": fed, "ECB": other_members("ECB"), "BoE": other_members("BoE"), "BoJ": other_members("BoJ")}
     flat = [m for ms in all_bank.values() for m in ms]
+    dissents, decisions, themes = [], [], None
     voters = {y: v for y, v in seed_voters(fed).items()}; voters_src = "SEED (rotation table + tenure) - not verified from statements"
     if DEMO:
         items, seen = demo_everything(flat); macro = demo_macro()
@@ -659,7 +763,7 @@ def main():
         def work(m):
             kw = {"FED": "Fed", "ECB": "ECB", "BoE": "Bank of England", "BoJ": "Bank of Japan"}[[b for b, ms in all_bank.items() if m in ms][0]]
             r = raw.get(m["id"], []) + fetch_news_member(m, kw)
-            return m["id"], finalize_items(r)
+            return m["id"], finalize_items(r, m["id"])
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
             for mid, (its, sn) in ex.map(work, flat): items[mid], seen[mid] = its, sn
         log("News (Google/Bing RSS)", "ok" if any(items.values()) else "FAIL", f"{sum(len(v) for v in items.values())} scored items")
@@ -670,7 +774,9 @@ def main():
         market = live_market(effr) or dict(effr=effr, strip=[], meetings=[], source="unavailable")
         lv = live_voters(fed)
         if lv:
-            for y, ids in lv.items(): voters[y] = ids
+            for y, ids in lv["voters"].items(): voters[y] = ids
+            dissents, decisions = lv["dissents"], lv["decisions"]
+            themes = build_themes(decisions, raw)
             voters_src = "2022-25: official FOMC statements (voters incl. stand-ins); 2026-28: Fed rotation table (seed)"
         photos = {m["id"]: fetch_photo(m) for m in flat if m["bank"] in ("Board", "NY") or m["kind"] == "pres"}
         log("Wikipedia photos", "ok", f"{sum(1 for v in photos.values() if v)} found")
@@ -681,7 +787,7 @@ def main():
         banks[b] = dict(res, members=[dict(id=m["id"], name=m["name"], short=m["short"], role=m["role"], bank=m["bank"], kind=m["kind"],
                                            start=m["start"], end=m["end"], initials=initials(m["name"]), photo=(photos.get(m["id"]) if photos else None),
                                            verify=m["verify"], votes=[y for y in YEARS if m["id"] in voters.get(y, [])] if b == "FED" else []) for m in ms])
-    cards = build_cards(fed, items)
+    cards = build_cards(flat, items)
 
     # sanity checks (FED, all members with a line)
     tone = banks["FED"]["tone"]; avg = []
@@ -699,7 +805,7 @@ def main():
         meta=dict(built=dt.datetime.now().strftime("%Y-%m-%d %H:%M"), market=dt.datetime.now().strftime("%Y-%m-%d %H:%M"), demo=DEMO,
                   as_of=TODAY.isoformat(), params=P, scale_by_bank={b: banks[b]["scale"] for b in banks},
                   voters_source=voters_src, secs=round(time.time() - t0, 1)),
-        months=MONTHS, banks=banks, items=items, cards=cards, macro=macro, market=market,
+        months=MONTHS, banks=banks, items=items, cards=cards, macro=macro, market=market, dissents=dissents, decisions=decisions, themes=themes,
         phrases=[{k: v for k, v in p.items() if k != "rx"} for p in PHRASES], flip_id=FLIP_ID,
         voters={str(y): voters[y] for y in YEARS}, rotation={str(y): ROTATION[y] for y in YEARS},
         checks=checks, log=LOG,

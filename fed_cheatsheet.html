@@ -126,6 +126,22 @@ h3{font-size:14px;margin:18px 0 6px}
 .bar{height:10px;border-radius:5px;background:var(--chip);overflow:hidden;display:flex}
 @media(max-width:1100px){.tiles{grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}
 @media(max-width:700px){.cards{grid-template-columns:1fr}#app{padding:12px}}
+.thm{display:grid;gap:2px;align-items:stretch;margin-top:8px;font-size:11.5px;overflow-x:auto}
+.thl{color:var(--ink);padding:3px 6px 3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thc{display:flex;flex-direction:column;min-height:22px;border-radius:3px;background:var(--chip);overflow:hidden}
+.thc i{display:block;width:100%}
+.thh{font-size:10.5px;color:var(--mut);font-weight:700;text-align:center;align-self:end;padding-bottom:2px}
+.thd small{font-size:8.5px;display:block;line-height:1}
+.thx{text-align:center;align-self:center;font-size:11.5px}
+.thf{font-size:9.5px;color:var(--faint);white-space:nowrap;overflow:visible}
+.dissents{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:11px;color:var(--mut);margin:2px 0 6px}
+.dissents b{color:var(--ink);font-size:11px}
+.dsn{background:var(--chip);border-radius:5px;padding:1px 7px}
+.srch{font:inherit;font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--solid);color:var(--ink);min-width:220px}
+.btbl tr[data-id]{cursor:pointer}
+.btbl tr[data-id]:hover td{background:var(--chip)}
+.btbl tr.sel td{background:var(--chip);font-weight:600}
+.bmc a{color:var(--ink)}
 </style></head><body>
 <div id="app">
 <header>
@@ -145,8 +161,8 @@ h3{font-size:14px;margin:18px 0 6px}
 /* ============================ basics ============================ */
 let D=null, ITC=null, MEM={}, MIDX={};
 const S={tab:"fomc",year:2026,view:"live",zoom:true,sort:"hawk",
-  tsPeriod:"All",tsMode:"charts",tsAdd:new Set(),hidden:new Set(),bank:"ECB",
-  R:{start:0,len:"latest",speed:1,voters:"start",ov:{nfp3:true,unemp:false,cpi:true,corecpi:false,corepce:true,ffr:false},show:"agg",add:new Set(),pos:0,playing:false,last:0}};
+  tsPeriod:"All",tsMode:"charts",tsAdd:new Set(),hidden:new Set(["gyr"]),bank:"ECB",bq:"",bsel:null,th:{min:true,sp:false,year:"All"},
+  R:{start:0,len:"latest",speed:2,voters:"start",ov:{nfp3:true,unemp:false,cpi:true,corecpi:false,corepce:true,ffr:false},show:"agg",add:new Set(),pos:0,playing:false,last:0}};
 const YC={2022:"#9b59b6",2023:"#16a5b8",2024:"#e0559a",2025:"#8d6e63",2026:"#e8832a",2027:"#2e7d4f",2028:"#243a5e"};
 const PAL=["#d62728","#7b3fb0","#1f77b4","#ff7f0e","#2ca02c","#8c564b","#e377c2","#17becf"];
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -225,7 +241,7 @@ function spectrum(host,bank,opt){
   const W=host.clientWidth||1000,L=34,R=34,sz=46,pw=W-L-R,X=v=>L+(v-lo)/(hi-lo)*pw;
   const order=mem.map(m=>({m,x:X(val(m))})).sort((a,b)=>a.x-b.x),lanes=[];
   order.forEach(o=>{let k=0;while(lanes[k]&&lanes[k].some(x=>Math.abs(x-o.x)<sz+8))k++;(lanes[k]=lanes[k]||[]).push(o.x);o.k=k});
-  const H=Math.max(420,lanes.length*(sz+16)+90);host.style.height=H+"px";
+  const H=Math.max(300,lanes.length*(sz+16)+90);host.style.height=H+"px";
   let h=`<div class="corner" style="left:14px;color:var(--dove)">◀ DOVISH</div><div class="corner" style="right:14px;color:var(--hawk)">HAWKISH ▶</div>`;
   if(opt.zoom&&lo>0)h+=`<div style="position:absolute;left:14px;top:30px;font-size:11px;color:var(--faint)">neutral (0) is off-screen to the left – untick "Zoom" to see it</div>`;
   const step=hi-lo>120?20:10;
@@ -292,7 +308,8 @@ function cardsGrid(){
     return `<div class="mc" data-id="${m.id}"><div class="top">${face(m,52,vy.length&&!vy.includes(m.id)?"dim":"")}<div><div class="nm">${esc(m.name)}</div><div class="rl">${esc(m.role)}</div><div class="chips">${chips}</div></div>
      <div class="num"><b style="color:${toneColor(v)}">${v==null?"–":sg(v)}</b><small>${v==null?"INSUFFICIENT EVIDENCE":toneLabel(v).toUpperCase()}</small></div></div>
      ${v==null?"":gaugeHTML(v,ITC&&ITC[m.id])}
-     <div class="spk">${spark(B("FED").tone[m.id].slice(-12))}<span>${mvT} 3m ${chg(v,t3)} · 6m ${chg(v,t6)}</span></div>
+     <div class="spk">${spark(B("FED").tone[m.id].slice(-12))}<span>${mvT} 3m ${chg(v,t3)} · 6m ${chg(v,t6)}</span>${bigMove("FED",m.id)?`<span class="pill" style="background:#fff1c2;color:#8a5a00" title="Last month's change is more than twice this member's usual monthly move (and at least 15 points)">Bigger than usual move</span>`:""}</div>
+     ${dissentLine(m.id,3)}
      ${topic("jobs","JOBS")}${topic("inflation","INFLATION")}${topic("guidance","GUIDANCE")}</div>`}).join("");
   $$(".mc").forEach(e=>e.onclick=()=>openWhy("FED",e.dataset.id))}
 
@@ -310,7 +327,7 @@ function openWhy(bank,id,mi){
   const dr=$("#drawer"),months=D.months.map((mo,i)=>[i,mo]).filter(([i])=>Bk.tone[id][i]!=null||true);
   const w=whyCompute(bank,id,mi),ph=Object.fromEntries(D.phrases.map(p=>[p.id,p]));
   const head=`<button class="x" onclick="closeDrawer()">×</button><div style="display:flex;gap:12px;align-items:center">${face(m,56)}<div><div style="font-size:17px;font-weight:700">${esc(m.name)}</div><div class="hint">${esc(m.role)}${m.verify?' · <b style="color:#b5621a">member list unverified – check</b>':""}</div></div></div>
-   <h3>Why this score?</h3><div class="ctl" style="margin-top:0"><span class="lab">Month</span><select id="wm">${months.map(([i,mo])=>`<option value="${i}" ${i===mi?"selected":""}>${mlab(mo)} ${Bk.tone[id][i]!=null?"("+sg(Bk.tone[id][i])+")":""}</option>`).join("")}</select></div>`;
+   ${bank==="FED"?dissentLine(id,99,true):""}<h3>Why this score?</h3><div class="ctl" style="margin-top:0"><span class="lab">Month</span><select id="wm">${months.map(([i,mo])=>`<option value="${i}" ${i===mi?"selected":""}>${mlab(mo)} ${Bk.tone[id][i]!=null?"("+sg(Bk.tone[id][i])+")":""}</option>`).join("")}</select></div>`;
   let body="";
   if(Bk.mu[id]==null)body=`<div class="note">Fewer than ${w.P.min_items} scored items in the whole period (${Bk.counts[id]}), so no tone line is drawn – "insufficient evidence".</div>`;
   else{
@@ -346,8 +363,8 @@ function groupDefs(){return [
 function memDef(id,color){return {key:"m"+id,name:MEM[id].short,color,fn:i=>B("FED").tone[id][i],w:2.2,mid:id}}
 function rTone(){
   const el=$("#view");const R=S.R;
-  el.innerHTML=`<div class="card" id="replay"></div><div class="card" id="shift"></div>`;
-  drawReplay();drawShift()}
+  el.innerHTML=`<div class="card" id="replay"></div><div class="card" id="shift"></div><div class="card" id="themes"></div>`;
+  drawReplay();drawShift();drawThemes()}
 
 /* ---------- Replay ---------- */
 function replayWin(){const R=S.R,n=nM();const i0=Math.min(R.start,n-2);const i1=R.len==="latest"?n-1:Math.min(n-1,i0+R.len-1);return[i0,Math.max(i1,i0+1)]}
@@ -361,8 +378,8 @@ function drawReplay(){
   <div class="ctl"><button class="btn sm" id="play">▶ Play</button><button class="btn sm" id="rst">↺</button>
    <span class="lab" style="margin-left:6px">Speed</span><span class="seg" id="rsp">${[.5,1,2,4].map(s=>`<button data-v="${s}" class="${R.speed===s?"on":""}">${s}×</button>`).join("")}</span>
    <span class="lab">Start</span><select id="rst0">${opts}</select>
-   <span class="lab">Length</span><span class="seg" id="rln">${[[6,"6M"],[12,"12M"],["latest","To latest"]].map(([k,l])=>`<button data-v="${k}" class="${R.len===k?"on":""}">${l}</button>`).join("")}</span>
-   <span class="lab">Voters of</span><span class="seg" id="rvo">${[["start","Start year"],...[2022,2023,2024,2025,2026,2027,2028].map(y=>[y,y])].map(([k,l])=>`<button data-v="${k}" class="${R.voters===k?"on":""}">${l}</button>`).join("")}</span></div>
+   <span class="lab" title="How many months the replay covers, counted from the start month. &quot;To latest&quot; runs to the most recent month.">Length of replay ⓘ</span><span class="seg" id="rln">${[[6,"6M"],[12,"12M"],["latest","To latest"]].map(([k,l])=>`<button data-v="${k}" class="${R.len===k?"on":""}">${l}</button>`).join("")}</span>
+   <span class="lab" title="Which year's voting members make up the bold average line. &quot;Start year&quot; uses the voters of the year the replay starts in.">Voter group ⓘ</span><span class="seg" id="rvo">${[["start","Start year"],...[2022,2023,2024,2025,2026,2027,2028].map(y=>[y,y])].map(([k,l])=>`<button data-v="${k}" class="${R.voters===k?"on":""}">${l}</button>`).join("")}</span></div>
   <div class="ctl" style="margin-top:2px"><span class="lab">Overlay</span>${Object.keys(OV).map(k=>`<span class="tg ${R.ov[k]?"on":""}" data-k="${k}">${ovSample(k)}${OV[k][0]}</span>`).join("")}</div>
   <div class="ctl" style="margin-top:2px"><span class="lab">Show</span><span class="seg" id="rsh"><button data-v="agg" class="${R.show==="agg"?"on":""}">${G.y} FOMC voters (aggregate)</button><button data-v="each" class="${R.show==="each"?"on":""}">…and each voter</button></span>${ringLegend()}</div>
   <div class="chartbox" id="rch"></div>
@@ -490,17 +507,46 @@ function rMarket(){
   <div class="card"><h2>Tone vs. the market</h2><div class="hint">FOMC all-participant average tone now: <b>${(()=>{const v=mean(currentMem("FED").map(m=>latest("FED",m.id)).filter(x=>x!=null));return v==null?"–":sg(v)})()}</b>. Sanity checks on the Method tab show how tone has related to the later rate path – it correlates, but this tool cannot prove the tone adds information beyond the rate path itself.</div></div>`}
 
 /* ============================ ECB / BoE / BoJ ============================ */
+function lastHeard(id){const its=D.items[id]||[];let d=null;its.forEach(i=>{if(!d||i.d>d)d=i.d});return d}
 function rBanks(){
   const el=$("#view"),bk=S.bank,Bk=B(bk);
   const ms=Bk.members.filter(m=>Bk.tone[m.id].some(v=>v!=null));
+  const cur=Bk.members.filter(m=>!m.end&&latest(bk,m.id)!=null).map(m=>({m,v:latest(bk,m.id)})).sort((x,y)=>y.v-x.v);
+  const avg=mean(cur.map(x=>x.v)),avg3=mean(Bk.members.filter(m=>!m.end).map(m=>latest(bk,m.id,3)).filter(v=>v!=null));
+  const hk=cur[0],dv=cur[cur.length-1];
   const defs=[{key:"avg",name:bk+" average",color:"#0b0f1a",w:3,fn:i=>mean(ms.map(m=>Bk.tone[m.id][i]).filter(v=>v!=null))},...ms.map((m,j)=>({key:m.id,name:m.short,color:PAL[j%PAL.length],w:1.6,fn:i=>Bk.tone[m.id][i]}))];
+  const tl=(k,v,d)=>`<div class="tile" style="cursor:default"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`;
+  const strip=cur.length?`<div class="tiles">${tl(bk+" average",sg(avg),`${toneLabel(avg)} · ${cur.length} of ${Bk.members.filter(m=>!m.end).length} scored`)}${tl("Most hawkish",esc(hk.m.short),sg(hk.v))}${tl("Most dovish",esc(dv.m.short),sg(dv.v))}${tl("Hawk–dove gap",Math.round(hk.v-dv.v)+" pts","spread of current members")}${tl("3-month drift",avg3==null?"–":sg(avg-avg3),avg3==null?"":avg-avg3>0?"more hawkish":"more dovish")}</div>`:"";
   el.innerHTML=`<div class="card"><div class="ctl" style="margin:0 0 6px"><span class="seg" id="bks">${["ECB","BoE","BoJ"].map(k=>`<button data-v="${k}" class="${bk===k?"on":""}">${k}</button>`).join("")}</span></div>
-   <div class="note" style="margin:8px 0"><b>Member lists are marked "verify".</b> They are seeded from memory of the current committees and have not been checked against the central bank's own site. Check them before relying on any line. Text coverage is news headlines only (no speeches fetched), and the same phrase lists as the Fed are used – they were written for Fed language.</div>
+   ${strip}
+   <div class="note" style="margin:8px 0"><b>Read with care.</b> Member lists are seeded from memory and marked "verify" – check them against the central bank's own site. Coverage is <b>news headlines only</b> (no speeches), scored with phrase lists written for Fed language. <b>News skews hawkish:</b> headlines tend to quote the most hawkish line in a speech, so these tones sit higher than a full reading would. Members with too few headlines show "no data".</div>
    <h2>${bk} spectrum</h2><div class="hint">Latest tone per member (−100 very dovish … +100 very hawkish). Scale for this bank is its own: the 93rd percentile of |x| within ${bk}.</div><div id="spec"></div></div>
    <div class="card"><h2>${bk} tone over time</h2><div class="chartbox" id="bch"></div></div>
-   <div class="card"><h2>Members</h2><table><tr><th>Member</th><th>Role</th><th class="n">Scored items</th><th class="n">Latest tone</th><th></th></tr>${Bk.members.map(m=>`<tr><td>${esc(m.name)}</td><td>${esc(m.role)}</td><td class="n">${Bk.counts[m.id]}</td><td class="n">${latest(bk,m.id)==null?"insufficient evidence":sg(latest(bk,m.id))}</td><td><span class="pill p-h" style="background:#fde5cf;color:#b5621a">verify</span></td></tr>`).join("")}</table></div>`;
-  $$("#bks button").forEach(b=>b.onclick=()=>{S.bank=b.dataset.v;rBanks()});
+   <div class="card"><h2>Members</h2><div class="ctl" style="margin-top:0"><input id="bq" class="srch" type="search" placeholder="Search ${bk} members…" value="${esc(S.bq)}"><span class="hint" style="margin:0">Click a row for the member card.</span></div>
+    <div id="bcard"></div><div id="btab"></div></div>`;
+  const table=()=>{const q=S.bq.trim().toLowerCase();
+    const rows=Bk.members.filter(m=>!q||(m.name+" "+m.role).toLowerCase().includes(q));
+    $("#btab").innerHTML=rows.length?`<table class="btbl"><tr><th>Member</th><th>Role</th><th class="n">Scored items</th><th class="n">Latest tone</th><th class="n" title="Latest tone minus the ${bk} average">vs bank</th><th class="n">Last heard</th><th></th></tr>${rows.map(m=>{const v=latest(bk,m.id),lh=lastHeard(m.id);
+      return `<tr data-id="${m.id}" class="${S.bsel===m.id?"sel":""}"><td>${esc(m.name)}</td><td>${esc(m.role)}</td><td class="n">${Bk.counts[m.id]}</td><td class="n" style="color:${toneColor(v)}">${v==null?"no data":sg(v)}</td><td class="n">${v==null||avg==null?"–":sg(v-avg)}</td><td class="n">${lh?dlab(lh):"–"}</td><td><span class="pill" style="background:#fde5cf;color:#b5621a">verify</span></td></tr>`}).join("")}</table>`:`<div class="empty">No member matches "${esc(S.bq)}".</div>`;
+    $$("#btab tr[data-id]").forEach(r=>r.onclick=()=>{S.bsel=S.bsel===r.dataset.id?null:r.dataset.id;card();table()})};
+  const card=()=>{const host=$("#bcard"),id=S.bsel,m=MEM[id];if(!id||!m||!Bk.members.some(x=>x.id===id)){host.innerHTML="";return}
+    const v=latest(bk,id),t3=latest(bk,id,3),t6=latest(bk,id,6),rk=cur.findIndex(x=>x.m.id===id),c=D.cards[id]||{},lh=lastHeard(id);
+    const chg=(a,b)=>a!=null&&b!=null?sg(a-b):"–";
+    const heads=(D.items[id]||[]).slice().sort((x,y)=>y.d.localeCompare(x.d)).slice(0,4);
+    const topic=(k,l)=>{const t=c[k];return `<span class="chip" style="${t?"":"opacity:.5"}">${l}: ${t?`<b>${t.stance}</b> (${t.n})`:"–"}</span>`};
+    host.innerHTML=`<div class="mc bmc" style="cursor:default;margin-bottom:12px"><div class="top">${face(m,52)}<div><div class="nm">${esc(m.name)}</div><div class="rl">${esc(m.role)}</div></div>
+      <div class="num"><b style="color:${toneColor(v)}">${v==null?"–":sg(v)}</b><small>${v==null?"NO DATA":toneLabel(v).toUpperCase()}</small></div></div>
+      ${v==null?"":gaugeHTML(v)}
+      <div class="spk">${spark(Bk.tone[id].slice(-12))}<span>vs ${bk} avg <b>${v==null||avg==null?"–":sg(v-avg)}</b> · rank ${rk<0?"–":`${rk+1} of ${cur.length} (hawkish first)`} · 3m ${chg(v,t3)} · 6m ${chg(v,t6)} · last heard ${lh?dlab(lh):"–"}</span></div>
+      <div class="chips" style="flex-wrap:wrap">${topic("jobs","Jobs")}${topic("inflation","Inflation")}${topic("guidance","Guidance")}</div>
+      <div class="topic"><div class="h">LATEST HEADLINES</div>${heads.length?heads.map(i=>`<div class="q">${i.u?`<a href="${esc(i.u)}" target="_blank" rel="noopener">${esc(i.t)}</a>`:esc(i.t)}</div><div class="src">— ${dlab(i.d)} · ${esc(i.src)} · ${i.s>0?"hawkish":i.s<0?"dovish":"neutral"} (${i.s.toFixed(2)})</div>`).join(""):`<div class="none">No scored headlines.</div>`}</div>
+      <div class="ctl"><button class="btn sm" id="bwhy">Why this score?</button><button class="btn sm" id="bx">Close</button></div></div>`;
+    $("#bwhy").onclick=()=>openWhy(bk,id);$("#bx").onclick=()=>{S.bsel=null;card();table()}};
+  $$("#bks button").forEach(b=>b.onclick=()=>{S.bank=b.dataset.v;S.bsel=null;S.bq="";rBanks()});
+  $("#bq").oninput=e=>{S.bq=e.target.value;table()};
+  table();card();
   spectrum($("#spec"),bk,{year:"all",view:"live",zoom:true});
+  $$("#spec .m").forEach(e=>e.onclick=()=>{S.bsel=e.dataset.id;card();table();$("#bcard").scrollIntoView({behavior:"smooth",block:"center"})});
   const n=nM(),Wd=1000,Ht=320,pl=56,pr=16,pt=12,pb=26,X=i=>pl+i/(n-1)*(Wd-pl-pr),Y=v=>pt+(100-v)/200*(Ht-pt-pb);
   let svg=`<svg viewBox="0 0 ${Wd} ${Ht}">`+[100,50,0,-50,-100].map(t=>`<line x1="${pl}" x2="${Wd-pr}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)" stroke-dasharray="${t===0?"4 4":"none"}"/><text x="${pl-6}" y="${Y(t)+4}" text-anchor="end" font-size="10.5" fill="var(--faint)">${t>0?"+"+t:t}</text>`).join("");
   D.months.forEach((mo,i)=>{if(mo.endsWith("-01")||mo.endsWith("-07"))svg+=`<text x="${X(i)}" y="${Ht-8}" text-anchor="middle" font-size="10.5" fill="var(--faint)">${mlab(mo)}</text>`});
@@ -538,6 +584,8 @@ function rMethod(){
   <tr><td>Scale divisor</td><td>${sc}</td><td>Recomputed on every refresh (${Math.round(P.scale_percentile*100)}th percentile of |x|). <b>Past values can therefore change when new data arrive.</b></td></tr>
   <tr><td>Max months a silent value is repeated</td><td>${P.max_carry}</td><td>Beyond this the line breaks rather than pretending to know.</td></tr>
   <tr><td>Minimum scored items for a tone line</td><td>${P.min_items}</td><td>Below this one or two headlines would define a person's whole history.</td></tr>
+  <tr><td>Bigger-than-usual move</td><td>2× typical, ≥ 15 pts</td><td>A member card gets a badge when last month's change in tone is more than twice that member's median monthly change and at least 15 points.</td></tr>
+  <tr><td>Warsh discount</td><td>${Math.round((P.warsh_discount??1)*100)}% from ${P.warsh_from||"–"}</td><td>Warsh has said he wants less forward guidance, so his words say less about where policy is going. From that date each of his items counts at this share of its hawk/dove signal (the date is a pick from headlines – check it).</td></tr>
   <tr><td>"hold / pause" sign flip</td><td>before ${P.flip_before}</td><td>Before the first 2024 cut, talk of "pausing/holding" meant ending hikes (dovish). From then on, "hold" in a cutting debate is hawkish.</td></tr></table>
   <h3>4 · The full phrase lists (this is the whole "model")</h3>
   <div class="hint">Weights are my judgement (written by the AI that built this page, not by a Fed economist, and not fitted to data). Patterns were first written for 2025–26 language and extended for 2022–23 hiking-cycle language. Open "show" to see the exact pattern. The Method screenshot you sent showed only part of the original lists, so some entries here are my reconstruction.</div>
@@ -552,5 +600,50 @@ function rMethod(){
 
 /* ============================ boot ============================ */
 let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{if(D&&(S.tab==="fomc"||S.tab==="banks")){const h=$("#spec");if(h)spectrum(h,S.tab==="fomc"?"FED":S.bank,S.tab==="fomc"?{year:S.year,view:S.view,zoom:S.zoom}:{year:"all",view:"live",zoom:true})}},150)});
+/* ============================ dissents, big moves ============================ */
+function dissentLine(id,max){const ds=(D.dissents||[]).filter(x=>x.id===id).sort((a,b)=>b.date.localeCompare(a.date));if(!ds.length)return "";
+  const items=ds.slice(0,max).map(x=>`<span class="dsn" title="FOMC statement ${x.date}">${dlab(x.date)} ${x.date.slice(0,4)} – ${esc(x.reason)}</span>`).join("");
+  return `<div class="dissents"><b>Dissented ${ds.length}×</b>${items}${ds.length>max?`<span class="dsn">+${ds.length-max} more</span>`:""}</div>`}
+function bigMove(bank,id){const t=B(bank).tone[id],n=t.length;const v=t[n-1],p=t[n-2];if(v==null||p==null)return false;
+  const d=[];for(let i=1;i<n;i++)if(t[i]!=null&&t[i-1]!=null&&t[i]!==t[i-1])d.push(Math.abs(t[i]-t[i-1]));if(d.length<6)return false;
+  d.sort((a,b)=>a-b);const med=d[Math.floor(d.length/2)];const ch=Math.abs(v-p);return ch>=15&&ch>2*med}
+
+/* ============================ What the FOMC talks about ============================ */
+function drawThemes(){
+  const host=$("#themes"),T=D.themes;if(!host)return;
+  if(!T||!T.meetings||!T.meetings.length){host.innerHTML=`<h2>What the FOMC talks about</h2><div class="empty">No minutes data in this build yet – it appears after the next live refresh.</div>`;return}
+  const st=S.th,years=["All",...[...new Set(T.meetings.map(m=>m.date.slice(0,4)))]];
+  const ms=T.meetings.filter(m=>st.year==="All"||m.date.startsWith(st.year));
+  const layers=[st.min&&"minutes",st.sp&&"speeches"].filter(Boolean);
+  const val=(m,k,l)=>m[l]?m[l][k]:null;
+  const comb=(m,k)=>{const vs=layers.map(l=>val(m,k,l)).filter(v=>v!=null);return vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:null};
+  const rowMax=k=>Object.fromEntries(layers.map(l=>[l,Math.max(1e-9,...T.meetings.map(m=>val(m,k,l)??0))]));
+  const glyph=m=>m.action==="hike"?`<span style="color:var(--hawk)" title="hike ${m.bp}bp">▲<small>${m.bp}</small></span>`:m.action==="cut"?`<span style="color:var(--dove)" title="cut ${m.bp}bp">▼<small>${m.bp}</small></span>`:`<span style="color:var(--faint)" title="hold">•</span>`;
+  const mlabD=d=>mlab(d.slice(0,7));
+  const cols=`grid-template-columns:minmax(150px,190px) repeat(${ms.length},minmax(14px,1fr)) 64px 74px`;
+  let h=`<h2>What the FOMC talks about</h2>
+   <div class="hint">How often each theme comes up, per 1,000 words – in the <b>minutes</b> (participants' own discussion; staff briefings left out) and in <b>Board speeches</b> given between one meeting and the next. Each column is a meeting, with its decision on top. Darker = louder, compared with that theme's own peak. Hover a cell for the numbers.</div>
+   <div class="ctl"><span class="lab">Layers</span><span class="tg ${st.min?"on":""}" data-l="min">Minutes</span><span class="tg ${st.sp?"on":""}" data-l="sp">Board speeches</span>
+    <span class="lab" style="margin-left:12px">Year</span><span class="seg" id="thy">${years.map(y=>`<button data-v="${y}" class="${st.year===y?"on":""}">${y}</button>`).join("")}</span></div>`;
+  if(!layers.length){host.innerHTML=h+`<div class="empty">Pick at least one layer.</div>`;bindThemes();return}
+  h+=`<div class="thm" style="${cols}"><div class="thh"></div>${ms.map(m=>`<div class="thh thd">${glyph(m)}</div>`).join("")}<div class="thh" title="Average of the last 3 meetings shown against the earlier ones">Trend</div><div class="thh" title="Average at meetings that moved rates ÷ average at holds (meetings shown)">Louder at moves?</div>`;
+  for(const th of T.themes){const k=th.id,mx=rowMax(k);
+    h+=`<div class="thl">${esc(th.label)}</div>`;
+    for(const m of ms){const parts=layers.map(l=>{const v=val(m,k,l);const a=v==null?0:Math.min(1,v/mx[l]);return `<i style="background:${v==null?"transparent":`rgba(47,79,147,${(.06+.94*a).toFixed(2)})`};${layers.length>1?"height:50%":"height:100%"}"></i>`}).join("");
+      const tip=`${dlab(m.date)} ${m.date.slice(0,4)} ·${m.action}${m.bp?" "+m.bp+"bp":""} · ${th.label}: `+layers.map(l=>`${l} ${val(m,k,l)==null?"n/a":val(m,k,l).toFixed(1)+" per 1k words"}${l==="speeches"?` (${m.n_speeches} speeches)`:""}`).join(", ");
+      h+=`<div class="thc" title="${esc(tip)}">${parts}</div>`}
+    const vs=ms.map(m=>comb(m,k));
+    const last=vs.slice(-3).filter(v=>v!=null),prev=vs.slice(0,-3).filter(v=>v!=null);
+    const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null,la=avg(last),pa=avg(prev);
+    const tr=la==null||pa==null||pa===0?"–":(()=>{const pc=(la/pa-1)*100;return `<span style="color:${pc>15?"var(--hawk)":pc<-15?"var(--dove)":"var(--mut)"}">${pc>=0?"▲":"▼"} ${Math.abs(pc).toFixed(0)}%</span>`})();
+    const mv=avg(ms.filter(m=>m.action!=="hold").map(m=>comb(m,k)).filter(v=>v!=null)),hd=avg(ms.filter(m=>m.action==="hold").map(m=>comb(m,k)).filter(v=>v!=null));
+    const ld=mv==null||!hd?"–":`<b style="color:${mv/hd>1.2?"var(--ink)":"var(--faint)"}">${(mv/hd).toFixed(1)}×</b>`;
+    h+=`<div class="thx">${tr}</div><div class="thx">${ld}</div>`}
+  h+=`<div class="thl"></div>${ms.map((m,i)=>`<div class="thf">${i%Math.max(1,Math.round(ms.length/10))===0?mlabD(m.date):""}</div>`).join("")}<div></div><div></div></div>
+   <div class="hint" style="margin-top:8px">Simple keyword counts, so this shows attention, not stance. Minutes come out about three weeks after each meeting.</div>`;
+  host.innerHTML=h;bindThemes()}
+function bindThemes(){$$("#themes .tg[data-l]").forEach(t=>t.onclick=()=>{S.th[t.dataset.l]=!S.th[t.dataset.l];drawThemes()});
+  $$("#thy button").forEach(b=>b.onclick=()=>{S.th.year=b.dataset.v;drawThemes()})}
+
 load().then(()=>{const h=location.hash.slice(1);const hh=h.split('&');if(TABS.some(t=>t[0]===hh[0]))S.tab=hh[0];const pm=/pos=(\d+)/.exec(h);if(/view=itc/.test(h))S.view='itc';if(pm){S.R.pos=+pm[1];S.R.add=new Set(['waller','daly'])}render()}).catch(e=>{$("#view").innerHTML=`<div class="empty">Could not load data.json (${esc(e)}).<br>Run <code>python -I build_data.py --demo</code> or start <code>python -I server.py</code> and open this page through it.</div>`});
 </script></body></html>
